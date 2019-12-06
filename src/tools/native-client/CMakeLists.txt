@@ -1,43 +1,37 @@
+
+message(STATUS "CMAKE_CURRENT_BINARY_DIR:" ${CMAKE_CURRENT_BINARY_DIR})
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR:" ${CMAKE_CURRENT_SOURCE_DIR})
+message(STATUS "NEBULA_HOME:" ${NEBULA_HOME})
+
 # locate jni header
 include_directories($ENV{JAVA_HOME}/include
                     $ENV{JAVA_HOME}/include/linux)
+include_directories(AFTER ${NEBULA_HOME}/src)
+include_directories(AFTER ${NEBULA_HOME}/src/common)
 
-nebula_add_library(nebula_native_client SHARED
-            $<TARGET_OBJECTS:dataman_obj>
-            $<TARGET_OBJECTS:fs_obj>
-            $<TARGET_OBJECTS:base_obj>
-            $<TARGET_OBJECTS:schema_obj>
-            $<TARGET_OBJECTS:network_obj>
-            $<TARGET_OBJECTS:storage_thrift_obj>
-            $<TARGET_OBJECTS:common_thrift_obj>
-            $<TARGET_OBJECTS:thrift_obj>
-            $<TARGET_OBJECTS:meta_client>
-            $<TARGET_OBJECTS:stats_obj>
-            $<TARGET_OBJECTS:time_obj>
-            $<TARGET_OBJECTS:meta_thrift_obj>
+add_compile_options(-fPIC)
+
+add_library(nebula_codec_obj
+            OBJECT
+            ${NEBULA_HOME}/src/common/base/Cord.cpp
+            ${NEBULA_HOME}/src/dataman/codec/Slice.cpp
+            ${NEBULA_HOME}/src/dataman/codec/SchemaProviderIf.cpp
+            ${NEBULA_HOME}/src/dataman/codec/NebulaSchemaProvider.cpp
+            ${NEBULA_HOME}/src/dataman/codec/RowReader.cpp
+            ${NEBULA_HOME}/src/dataman/codec/RowWriter.cpp
+           )
+
+add_library(nebula_native_client
+            SHARED
+            $<TARGET_OBJECTS:nebula_codec_obj>
             src/main/cpp/com_vesoft_client_NativeClient.cpp)
 
 
 target_link_libraries(nebula_native_client
-                      ${OPENSSL_SSL_LIBRARY}
-                      ${OPENSSL_CRYPTO_LIBRARY}
-                      ${THRIFT_LIBRARIES}
-                      -lfolly
-                      -lboost_context
                       -lglog
                       -lgflags
-                      -lsnappy
-                      -lz
-                      -lzstd
-                      -levent
-                      -ldouble-conversion
                       -static-libgcc
                       -static-libstdc++
                       -lpthread
                       -ldl)
 
-add_custom_target(
-    nebula_native_java_client ALL
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/build.sh" ${CMAKE_CURRENT_SOURCE_DIR} ">" "./_build.log" "2>&1"
-    DEPENDS nebula_native_client
-)
