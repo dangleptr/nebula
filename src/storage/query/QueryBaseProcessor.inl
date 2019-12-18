@@ -308,7 +308,8 @@ void QueryBaseProcessor<REQ, RESP>::collectProps(RowReader* reader,
                                                  folly::StringPiece key,
                                                  const std::vector<PropContext>& props,
                                                  FilterContext* fcontext,
-                                                 Collector* collector) {
+                                                 Collector* collector,
+                                                 bool compactDstIdProps) {
     for (auto& prop : props) {
         if (!key.empty()) {
             switch (prop.pikType_) {
@@ -320,7 +321,11 @@ void QueryBaseProcessor<REQ, RESP>::collectProps(RowReader* reader,
                     continue;
                 case PropContext::PropInKeyType::DST:
                     VLOG(3) << "collect _dst, value = " << NebulaKeyUtils::getDstId(key);
-                    collector->collectVid(NebulaKeyUtils::getDstId(key), prop);
+                    if (compactDstIdProps) {
+                        collector->collectVid(NebulaKeyUtils::getDstId(key), prop);
+                    } else {
+                        collector->collectDstId(NebulaKeyUtils::getDstId(key));
+                    }
                     continue;
                 case PropContext::PropInKeyType::TYPE:
                     VLOG(3) << "collect _type, value = " << NebulaKeyUtils::getEdgeType(key);
@@ -441,7 +446,9 @@ kvstore::ResultCode QueryBaseProcessor<REQ, RESP>::collectEdgeProps(
         lastRank = rank;
         lastDstId = dstId;
         std::unique_ptr<RowReader> reader;
-        if (edgeType > 0 && !val.empty()) {
+        if (!onlyStructure_
+                && edgeType > 0
+                && !val.empty()) {
             reader = RowReader::getEdgePropReader(this->schemaMan_, val, spaceId_, edgeType);
             if (exp_ != nullptr) {
                 getters.getAliasProp = [this, edgeType, &reader, &key](const std::string& edgeName,
@@ -471,8 +478,18 @@ kvstore::ResultCode QueryBaseProcessor<REQ, RESP>::collectEdgeProps(
                     }
                     return value(std::move(res));
                 };
-                getters.getEdgeRank = [&] () -> VariantType {
+                getters.getEdgeRank = [&rank] () -> VariantType {
                     return rank;
+                };
+                getters.getEdgeDstId = [this,
+                                        &edgeType,
+                                        &dstId] (const std::string& edgeName) -> OptVariantType {
+                    auto edgeStatus = this->schemaMan_->toEdgeType(spaceId_, edgeName);
+                    CHECK(edgeStatus.ok());
+                    if (edgeType != edgeStatus.value()) {
+                        return Status::Error("ignore this edge");
+                    }
+                    return dstId;
                 };
                 getters.getSrcTagProp = [&fcontext] (const std::string& tag,
                                                      const std::string& prop) -> OptVariantType {
@@ -561,6 +578,16 @@ void QueryBaseProcessor<REQ, RESP>::process(const cpp2::GetNeighborsRequest& req
     CHECK_NOTNULL(executor_);
     spaceId_ = req.get_space_id();
     int32_t returnColumnsNum = req.get_return_columns().size();
+    VLOG(1) << "Total edge types " << req.edge_types.size()
+            << ", total returned columns " << returnColumnsNum
+            << ", the first column "
+            << (returnColumnsNum > 0 ? req.get_return_columns()[0].name : "");
+    if (req.edge_types.size() == 1
+            && returnColumnsNum == 1
+            && req.get_return_columns()[0].name == "_dst") {
+        onlyStructure_ = true;
+    }
+
     VLOG(3) << "Receive request, spaceId " << spaceId_ << ", return cols " << returnColumnsNum;
     tagContexts_.reserve(returnColumnsNum);
 

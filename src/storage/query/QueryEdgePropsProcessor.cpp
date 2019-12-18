@@ -34,7 +34,7 @@ kvstore::ResultCode QueryEdgePropsProcessor::collectEdgesProps(
                                                    iter->val(),
                                                    spaceId_,
                                                    edgeKey.edge_type);
-        this->collectProps(reader.get(), iter->key(), props, nullptr, &collector);
+        this->collectProps(reader.get(), iter->key(), props, nullptr, &collector, true);
         rsWriter.addRow(writer);
 
         iter->next();

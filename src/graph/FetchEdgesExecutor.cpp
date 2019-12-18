@@ -341,6 +341,10 @@ void FetchEdgesExecutor::processResult(RpcResponse &&result) {
         while (iter) {
             auto writer = std::make_unique<RowWriter>(outputSchema);
 
+            getters.getEdgeDstId = [&iter,
+                                    &eschema] (const std::string&) -> OptVariantType {
+                return Collector::getProp(eschema.get(), "_dst", &*iter);
+            };
             getters.getAliasProp =
                 [&iter, &eschema] (const std::string&,
                                    const std::string &prop) -> OptVariantType {

@@ -562,13 +562,15 @@ Status FindPathExecutor::doFilter(
                 auto edgeType = edata.type;
                 auto it = edgeSchema.find(edgeType);
                 DCHECK(it != edgeSchema.end());
-                RowSetReader rsReader(it->second, edata.data);
-                auto iter = rsReader.begin();
                 Neighbors neighbors;
-                while (iter) {
+                for (auto& edge : edata.get_edges()) {
+                    auto dst = edge.get_dst();
+                    auto reader = RowReader::getRowReader(edge.props, it->second);
+                    DCHECK(reader != nullptr);
                     std::vector<VariantType> temps;
+                    temps.emplace_back(dst);
                     for (auto &prop : kReserveProps_) {
-                        auto res = RowReader::getPropByName(&*iter, prop);
+                        auto res = RowReader::getPropByName(reader.get(), prop);
                         if (ok(res)) {
                             temps.emplace_back(std::move(value(res)));
                         } else {
@@ -580,8 +582,7 @@ Status FindPathExecutor::doFilter(
                         boost::get<int64_t>(temps[1]),
                         boost::get<int64_t>(temps[2]));
                     neighbors.emplace_back(std::move(neighbor));
-                    ++iter;
-                }  // while `iter'
+                }
                 auto frontier = std::make_pair(vdata.get_vertex_id(), std::move(neighbors));
                 frontiers.emplace_back(std::move(frontier));
             }  // `edata'
@@ -598,6 +599,13 @@ FindPathExecutor::getStepOutProps(bool reversely) {
     }
     std::vector<storage::cpp2::PropDef> props;
     for (auto &e : *edges) {
+        {
+            storage::cpp2::PropDef pd;
+            pd.owner = storage::cpp2::PropOwner::EDGE;
+            pd.name = "_dst";
+            pd.id.set_edge_type(e);
+            props.emplace_back(std::move(pd));
+        }
         for (auto &prop : kReserveProps_) {
             storage::cpp2::PropDef pd;
             pd.owner = storage::cpp2::PropOwner::EDGE;

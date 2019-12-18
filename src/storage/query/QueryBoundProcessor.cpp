@@ -10,6 +10,8 @@
 #include "dataman/RowReader.h"
 #include "dataman/RowWriter.h"
 
+DEFINE_int32(reserved_edges_one_vertex, 1024, "reserve edges for one vertex");
+
 namespace nebula {
 namespace storage {
 
@@ -19,24 +21,30 @@ kvstore::ResultCode QueryBoundProcessor::processEdgeImpl(const PartitionID partI
                                                          const std::vector<PropContext>& props,
                                                          FilterContext& fcontext,
                                                          cpp2::VertexData& vdata) {
-    RowSetWriter rsWriter;
+    std::vector<cpp2::IdAndProp> edges;
+    edges.reserve(FLAGS_reserved_edges_one_vertex);
     auto ret = collectEdgeProps(
         partId, vId, edgeType, props, &fcontext,
         [&, this](RowReader* reader, folly::StringPiece k, const std::vector<PropContext>& p) {
-            RowWriter writer(rsWriter.schema());
+            RowWriter writer;
             PropsCollector collector(&writer);
             this->collectProps(reader, k, p, &fcontext, &collector);
-            rsWriter.addRow(writer);
+            cpp2::IdAndProp edge;
+            edge.set_dst(collector.getDstId());
+            if (!onlyStructure_) {
+                edge.set_props(writer.encode());
+            }
+            edges.emplace_back(std::move(edge));
         });
     if (ret != kvstore::ResultCode::SUCCEEDED) {
         return ret;
     }
-
-    if (!rsWriter.data().empty()) {
-        vdata.edge_data.emplace_back(apache::thrift::FragileConstructor::FRAGILE, edgeType,
-                                     std::move(rsWriter.data()));
+    if (!edges.empty()) {
+        cpp2::EdgeData edgeData;
+        edgeData.set_type(edgeType);
+        edgeData.set_edges(std::move(edges));
+        vdata.edge_data.emplace_back(std::move(edgeData));
     }
-
     return ret;
 }
 
@@ -94,8 +102,7 @@ kvstore::ResultCode QueryBoundProcessor::processVertex(PartitionID partId, Verte
         return kvstore::ResultCode::SUCCEEDED;
     }
 
-    kvstore::ResultCode ret;
-    ret = processEdge(partId, vId, fcontext, vResp);
+    auto ret = processEdge(partId, vId, fcontext, vResp);
 
     if (ret != kvstore::ResultCode::SUCCEEDED) {
         return ret;
@@ -104,6 +111,9 @@ kvstore::ResultCode QueryBoundProcessor::processVertex(PartitionID partId, Verte
     if (!vResp.edge_data.empty()) {
         // Only return the vertex if edges existed.
         std::lock_guard<std::mutex> lg(this->lock_);
+        for (auto& edata : vResp.edge_data) {
+            totalEdges_ += edata.edges.size();
+        }
         vertices_.emplace_back(std::move(vResp));
     }
 
@@ -113,6 +123,7 @@ kvstore::ResultCode QueryBoundProcessor::processVertex(PartitionID partId, Verte
 void QueryBoundProcessor::onProcessFinished(int32_t retNum) {
     (void)retNum;
     resp_.set_vertices(std::move(vertices_));
+    resp_.set_total_edges(totalEdges_);
     std::unordered_map<TagID, nebula::cpp2::Schema> vertexSchema;
     if (!this->tagContexts_.empty()) {
         for (auto& tc : this->tagContexts_) {
@@ -143,6 +154,9 @@ void QueryBoundProcessor::onProcessFinished(int32_t retNum) {
             RowSetWriter rsWriter;
             auto& props = ec.second;
             for (auto& p : props) {
+                if (p.prop_.name == "_dst") {
+                    continue;
+                }
                 respEdge.columns.emplace_back(columnDef(std::move(p.prop_.name), p.type_.type));
             }
 
