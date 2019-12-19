@@ -40,3 +40,7 @@ nebula_add_library(
 )
 
 nebula_add_subdirectory(test)
+
+if(ENABLE_STORAGE_CPPCLIENT_LIB)
+nebula_add_subdirectory(client)
+endif()

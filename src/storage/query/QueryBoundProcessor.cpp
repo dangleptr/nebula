@@ -10,7 +10,8 @@
 #include "dataman/RowReader.h"
 #include "dataman/RowWriter.h"
 
-DEFINE_int32(reserved_edges_one_vertex, 1024, "reserve edges for one vertex");
+DECLARE_int32(reserved_edges_one_vertex);
+DECLARE_int32(reserved_vertices);
 
 namespace nebula {
 namespace storage {
@@ -26,13 +27,19 @@ kvstore::ResultCode QueryBoundProcessor::processEdgeImpl(const PartitionID partI
     auto ret = collectEdgeProps(
         partId, vId, edgeType, props, &fcontext,
         [&, this](RowReader* reader, folly::StringPiece k, const std::vector<PropContext>& p) {
-            RowWriter writer;
-            PropsCollector collector(&writer);
-            this->collectProps(reader, k, p, &fcontext, &collector);
             cpp2::IdAndProp edge;
-            edge.set_dst(collector.getDstId());
-            if (!onlyStructure_) {
-                edge.set_props(writer.encode());
+            if (onlyStructure_) {
+                PropsCollector collector(nullptr);
+                this->collectProps(reader, k, p, &fcontext, &collector);
+                edge.set_dst(collector.getDstId());
+            } else {
+                RowWriter writer;
+                PropsCollector collector(&writer);
+                this->collectProps(reader, k, p, &fcontext, &collector);
+                edge.set_dst(collector.getDstId());
+                if (!onlyStructure_) {
+                    edge.set_props(writer.encode());
+                }
             }
             edges.emplace_back(std::move(edge));
         });

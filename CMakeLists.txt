@@ -31,6 +31,7 @@ option(ENABLE_ASAN "Whether to turn AddressSanitizer ON or OFF" OFF)
 option(ENABLE_TESTING "Whether to turn unit test ON or OFF" ON)
 option(ENABLE_UBSAN "Whether to turn Undefined Behavior Sanitizer ON or OFF" OFF)
 option(ENABLE_FUZZ_TEST "Whether to turn Fuzz Test ON or OFF" OFF)
+option(ENABLE_STORAGE_CPPCLIENT_LIB "Whether to build cpp client lib ON or OFF" OFF)
 
 message(STATUS "ENABLE_ASAN: ${ENABLE_ASAN}")
 message(STATUS "ENABLE_TESTING: ${ENABLE_TESTING}")
@@ -38,7 +39,7 @@ message(STATUS "ENABLE_UBSAN: ${ENABLE_UBSAN}")
 message(STATUS "ENABLE_FUZZ_TEST: ${ENABLE_FUZZ_TEST}")
 
 
-if (ENABLE_NATIVE)
+if (ENABLE_NATIVE OR ENABLE_STORAGE_CPPCLIENT_LIB)
     message(STATUS "ENABLE_NATIVE is ${ENABLE_NATIVE}")
     add_compile_options(-fPIC)
 endif()

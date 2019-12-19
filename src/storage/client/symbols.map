@@ -1,0 +1,13 @@
+{
+global:
+    extern "C++" {
+        nebula::NebulaStorageClient::*;
+        nebula::VertexData::*;
+        nebula::Response::*;
+        nebula::ResultCode::*;
+        nebula::OnSucceeded::*;
+        nebula::OnError::*;
+    };
+local:
+    *;
+};

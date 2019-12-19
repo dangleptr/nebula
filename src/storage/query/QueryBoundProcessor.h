@@ -54,7 +54,6 @@ private:
 protected:
     // Indicate the request only get vertex props.
     bool onlyVertexProps_ = false;
-    int32_t totalEdges_ = 0;
 };
 
 }  // namespace storage

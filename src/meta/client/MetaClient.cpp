@@ -33,12 +33,14 @@ MetaClient::MetaClient(std::shared_ptr<folly::IOThreadPoolExecutor> ioThreadPool
                        HostAddr localHost,
                        ClusterID clusterId,
                        bool inStoraged,
-                       const std::string &serviceName)
+                       const std::string &serviceName,
+                       bool skipLoadCfg)
     : ioThreadPool_(ioThreadPool)
     , addrs_(std::move(addrs))
     , localHost_(localHost)
     , clusterId_(clusterId)
-    , inStoraged_(inStoraged) {
+    , inStoraged_(inStoraged)
+    , skipLoadCfg_(skipLoadCfg) {
     CHECK(ioThreadPool_ != nullptr) << "IOThreadPool is required";
     CHECK(!addrs_.empty())
         << "No meta server address is specified. Meta server is required";
@@ -79,9 +81,11 @@ bool MetaClient::isMetadReady() {
 }
 
 bool MetaClient::waitForMetadReady(int count, int retryIntervalSecs) {
-    std::string gflagsJsonPath;
-    GflagsManager::getGflagsModule(gflagsModule_);
-    gflagsDeclared_ = GflagsManager::declareGflags(gflagsModule_);
+    if (!skipLoadCfg_) {
+        std::string gflagsJsonPath;
+        GflagsManager::getGflagsModule(gflagsModule_);
+        gflagsDeclared_ = GflagsManager::declareGflags(gflagsModule_);
+    }
     isRunning_ = true;
     int tryCount = count;
     while (!isMetadReady() && ((count == -1) || (tryCount > 0)) && isRunning_) {

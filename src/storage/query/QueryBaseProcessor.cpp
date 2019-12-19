@@ -10,6 +10,9 @@ DEFINE_int32(max_handlers_per_req, 10, "The max handlers used to handle one requ
 DEFINE_int32(min_vertices_per_bucket, 3, "The min vertices number in one bucket");
 DEFINE_int32(max_edge_returned_per_vertex, INT_MAX, "Max edge number returnred searching vertex");
 DEFINE_bool(enable_vertex_cache, true, "Enable vertex cache");
+DEFINE_int32(slow_get_bound_ms, 15, "Default slow get bound threshhold");
+DEFINE_int32(reserved_edges_one_vertex, 1024, "reserve edges for one vertex");
+DEFINE_int32(reserved_vertices, 512, "reserve vertices for one request");
 
 namespace nebula {
 namespace storage {

@@ -9,11 +9,15 @@
 #include "dataman/RowReader.h"
 #include "dataman/RowWriter.h"
 #include "filter/FunctionManager.h"
+#include "base/SlowOpTracker.h"
 
 DECLARE_int32(max_handlers_per_req);
 DECLARE_int32(min_vertices_per_bucket);
 DECLARE_int32(max_edge_returned_per_vertex);
 DECLARE_bool(enable_vertex_cache);
+DECLARE_int32(slow_get_bound_ms);
+DECLARE_int32(reserved_edges_one_vertex);
+DECLARE_int32(reserved_vertices);
 
 namespace nebula {
 namespace storage {
@@ -523,7 +527,7 @@ folly::Future<std::vector<OneVertexResp>>
 QueryBaseProcessor<REQ, RESP>::asyncProcessBucket(Bucket bucket) {
     folly::Promise<std::vector<OneVertexResp>> pro;
     auto f = pro.getFuture();
-    executor_->add([this, p = std::move(pro), b = std::move(bucket)] () mutable {
+    auto process = [this] (const Bucket& b, folly::Promise<std::vector<OneVertexResp>>& p) {
         std::vector<OneVertexResp> codes;
         codes.reserve(b.vertices_.size());
         for (auto& pv : b.vertices_) {
@@ -532,7 +536,17 @@ QueryBaseProcessor<REQ, RESP>::asyncProcessBucket(Bucket bucket) {
                                processVertex(pv.first, pv.second));
         }
         p.setValue(std::move(codes));
-    });
+    };
+    if (FLAGS_max_handlers_per_req > 1) {
+        executor_->add([this,
+                        pro = std::move(pro),
+                        bucket = std::move(bucket),
+                        process = std::move(process)] () mutable {
+            process(bucket, pro);
+        });
+    } else {
+        process(bucket, pro);
+    }
     return f;
 }
 
@@ -574,6 +588,46 @@ std::vector<Bucket> QueryBaseProcessor<REQ, RESP>::genBuckets(
 }
 
 template<typename REQ, typename RESP>
+void QueryBaseProcessor<REQ, RESP>::fastPath(const cpp2::GetNeighborsRequest& req) {
+    auto edgeType = req.edge_types[0];
+    std::vector<cpp2::VertexData> vd;
+    vd.reserve(FLAGS_reserved_vertices);
+    for (auto& pv : req.get_parts()) {
+        auto partId = pv.first;
+        for (auto& vId : pv.second) {
+            vd.emplace_back();
+            vd.back().set_vertex_id(vId);
+            std::vector<cpp2::EdgeData> ed;
+            ed.emplace_back();
+
+            std::vector<cpp2::IdAndProp> idProps;
+            idProps.reserve(FLAGS_reserved_edges_one_vertex);
+            auto prefix = NebulaKeyUtils::edgePrefix(partId, vId, edgeType);
+            std::unique_ptr<kvstore::KVIterator> iter;
+            auto ret = this->kvstore_->prefix(spaceId_, partId, prefix, &iter);
+            if (ret != kvstore::ResultCode::SUCCEEDED || !iter) {
+                return;
+            }
+            int32_t cnt = 0;
+            for (; iter->valid() && cnt < FLAGS_max_edge_returned_per_vertex
+                 ; iter->next(), cnt++) {
+                auto key = iter->key();
+                idProps.emplace_back();
+                idProps.back().set_dst(NebulaKeyUtils::getDstId(key));
+            }
+            totalEdges_ += cnt;
+            ed.back().set_edges(std::move(idProps));
+            vd.back().set_edge_data(std::move(ed));
+        }
+    }
+
+    this->resp_.set_total_edges(totalEdges_);
+    this->resp_.set_vertices(std::move(vd));
+    this->onFinished();
+    return;
+}
+
+template<typename REQ, typename RESP>
 void QueryBaseProcessor<REQ, RESP>::process(const cpp2::GetNeighborsRequest& req) {
     CHECK_NOTNULL(executor_);
     spaceId_ = req.get_space_id();
@@ -586,6 +640,8 @@ void QueryBaseProcessor<REQ, RESP>::process(const cpp2::GetNeighborsRequest& req
             && returnColumnsNum == 1
             && req.get_return_columns()[0].name == "_dst") {
         onlyStructure_ = true;
+        fastPath(req);
+        return;
     }
 
     VLOG(3) << "Receive request, spaceId " << spaceId_ << ", return cols " << returnColumnsNum;
@@ -605,15 +661,22 @@ void QueryBaseProcessor<REQ, RESP>::process(const cpp2::GetNeighborsRequest& req
         return;
     }
     // const auto& filter = req.get_filter();
+    SlowOpTracker op;
     auto buckets = genBuckets(req);
     std::vector<folly::Future<std::vector<OneVertexResp>>> results;
     for (auto& bucket : buckets) {
         results.emplace_back(asyncProcessBucket(std::move(bucket)));
     }
-    folly::collectAll(results).via(executor_).thenTry([
+    folly::collectAll(results).via(FLAGS_max_handlers_per_req > 1
+                                   ? executor_
+                                   : &folly::InlineExecutor::instance()).thenTry([
                      this,
-                     returnColumnsNum] (auto&& t) mutable {
+                     returnColumnsNum,
+                     op] (auto&& t) mutable {
         CHECK(!t.hasException());
+        if (op.slow(FLAGS_slow_get_bound_ms)) {
+            op.output("slow get bound", folly::stringPrintf("total edges:%d", totalEdges_));
+        }
         std::unordered_set<PartitionID> failedParts;
         for (auto& bucketTry : t.value()) {
             CHECK(!bucketTry.hasException());

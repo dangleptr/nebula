@@ -110,6 +110,8 @@ protected:
 
     bool checkExp(const Expression* exp);
 
+    void fastPath(const cpp2::GetNeighborsRequest& req);
+
 protected:
     GraphSpaceID  spaceId_;
     std::unique_ptr<ExpressionContext> expCtx_;
@@ -119,6 +121,7 @@ protected:
     folly::Executor* executor_ = nullptr;
     VertexCache* vertexCache_ = nullptr;
     std::unordered_map<std::string, EdgeType> edgeMap_;
+    int32_t totalEdges_ = 0;
     bool onlyStructure_ = false;
 };
 

@@ -45,9 +45,11 @@ public:
 
 protected:
     virtual void onFinished() {
+        /*
         stats::Stats::addStatsValue(stats_,
                                     this->result_.get_failed_codes().empty(),
                                     this->duration_.elapsedInUSec());
+        */
         this->result_.set_latency_in_us(this->duration_.elapsedInUSec());
         this->result_.set_failed_codes(this->codes_);
         this->resp_.set_result(std::move(this->result_));

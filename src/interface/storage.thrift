@@ -153,6 +153,8 @@ struct QueryStatsResponse {
     1: required ResponseCommon result,
     2: optional common.Schema schema,
     3: optional binary data,
+    4: optional list<VertexData> vertices,
+    5: optional i32 total_edges,
 }
 
 struct EdgeKeyResponse {

@@ -117,7 +117,8 @@ public:
                         HostAddr localHost = HostAddr(0, 0),
                         ClusterID clusterId = 0,
                         bool inStoraged = true,
-                        const std::string &serviceName = "");
+                        const std::string &serviceName = "",
+                        bool skipLoadCfg = false);
 
     virtual ~MetaClient();
 
@@ -454,6 +455,7 @@ private:
     std::atomic_bool      configReady_{false};
     std::vector<cpp2::ConfigItem> gflagsDeclared_;
     std::unique_ptr<stats::Stats> stats_;
+    bool                 skipLoadCfg_;
 };
 
 }  // namespace meta
