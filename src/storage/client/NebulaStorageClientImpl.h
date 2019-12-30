@@ -22,6 +22,7 @@ public:
 
     ResultCode getNeighbors(const std::vector<VertexID>& srcIds,
                             const std::string& edgeName,
+                            int32_t edgesLimit,
                             OnSucceeded onSuc,
                             OnError onErr);
 

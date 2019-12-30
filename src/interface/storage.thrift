@@ -179,6 +179,8 @@ struct GetNeighborsRequest {
     3: list<common.EdgeType> edge_types,
     4: binary filter,
     5: list<PropDef> return_columns,
+    // The max edges limit for one vertex.
+    6: i32  edges_limit,
 }
 
 struct VertexPropRequest {

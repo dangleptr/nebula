@@ -106,7 +106,8 @@ folly::SemiFuture<StorageRpcResponse<cpp2::QueryResponse>> StorageClient::getNei
         const std::vector<EdgeType> &edgeTypes,
         std::string filter,
         std::vector<cpp2::PropDef> returnCols,
-        folly::EventBase* evb) {
+        folly::EventBase* evb,
+        int32_t edgesLimit) {
     auto status = clusterIdsToHosts(space, vertices, [](const VertexID& v) { return v; });
 
     if (!status.ok()) {
@@ -125,6 +126,7 @@ folly::SemiFuture<StorageRpcResponse<cpp2::QueryResponse>> StorageClient::getNei
         req.set_edge_types(edgeTypes);
         req.set_filter(filter);
         req.set_return_columns(returnCols);
+        req.set_edges_limit(edgesLimit);
     }
 
     return collectResponse(

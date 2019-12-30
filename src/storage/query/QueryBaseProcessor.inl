@@ -592,6 +592,7 @@ void QueryBaseProcessor<REQ, RESP>::fastPath(const cpp2::GetNeighborsRequest& re
     auto edgeType = req.edge_types[0];
     std::vector<cpp2::VertexData> vd;
     vd.reserve(FLAGS_reserved_vertices);
+    auto edges_limit = std::min(FLAGS_max_edge_returned_per_vertex, req.get_edges_limit());
     for (auto& pv : req.get_parts()) {
         auto partId = pv.first;
         for (auto& vId : pv.second) {
@@ -609,7 +610,7 @@ void QueryBaseProcessor<REQ, RESP>::fastPath(const cpp2::GetNeighborsRequest& re
                 return;
             }
             int32_t cnt = 0;
-            for (; iter->valid() && cnt < FLAGS_max_edge_returned_per_vertex
+            for (; iter->valid() && cnt < edges_limit
                  ; iter->next(), cnt++) {
                 auto key = iter->key();
                 idProps.emplace_back();

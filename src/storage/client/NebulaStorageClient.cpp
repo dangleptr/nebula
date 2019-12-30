@@ -31,10 +31,12 @@ bool NebulaStorageClient::init(const std::string& spaceName, int32_t ioHandlers)
 
 ResultCode NebulaStorageClient::getNeighbors(const std::vector<VertexID>& srcIds,
                                              const std::string& edgeName,
+                                             int32_t edgesLimit,
                                              OnSucceeded onSuc,
                                              OnError onErr) {
     return client_->getNeighbors(srcIds,
                                  edgeName,
+                                 edgesLimit,
                                  std::move(onSuc),
                                  std::move(onErr));
 }

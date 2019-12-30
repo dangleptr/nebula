@@ -63,6 +63,7 @@ bool NebulaStorageClientImpl::init(const std::string& spaceName, int ioHandlers)
 
 ResultCode NebulaStorageClientImpl::getNeighbors(const std::vector<VertexID>& srcIds,
                                                  const std::string& edgeName,
+                                                 int32_t edgesLimit,
                                                  OnSucceeded onSuc,
                                                  OnError onErr) {
     auto it = edgeMaps_.find(edgeName);
@@ -74,8 +75,9 @@ ResultCode NebulaStorageClientImpl::getNeighbors(const std::vector<VertexID>& sr
     pd.owner = storage::cpp2::PropOwner::EDGE;
     pd.name = "_dst";
     pd.id.set_edge_type(type);
-    storageClient_->getNeighbors(spaceId_, srcIds, {type}, "", {pd}).via(ioExecutor_.get())
-    .thenValue([this, onSuc = std::move(onSuc)](auto&& rpcResp) mutable {
+    storageClient_->getNeighbors(spaceId_, srcIds, {type}, "", {pd}, nullptr, edgesLimit)
+        .via(ioExecutor_.get())
+        .thenValue([this, onSuc = std::move(onSuc)](auto&& rpcResp) mutable {
         auto& all = rpcResp.responses();
         auto& hostLatency = rpcResp.hostLatency();
         int32_t totalVertices = 0;

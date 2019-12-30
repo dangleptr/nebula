@@ -121,7 +121,8 @@ public:
         const std::vector<EdgeType> &edgeTypes,
         std::string filter,
         std::vector<storage::cpp2::PropDef> returnCols,
-        folly::EventBase* evb = nullptr);
+        folly::EventBase* evb = nullptr,
+        int32_t edgesLimit = INT_MAX);
 
     folly::SemiFuture<StorageRpcResponse<storage::cpp2::QueryStatsResponse>> neighborStats(
         GraphSpaceID space,
