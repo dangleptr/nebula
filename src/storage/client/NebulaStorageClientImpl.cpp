@@ -23,7 +23,7 @@ bool NebulaStorageClientImpl::init(const std::string& spaceName, int ioHandlers)
                                                      HostAddr(0, 0),
                                                      0,
                                                      false,
-                                                     nullptr,
+                                                     "",
                                                      true);
     // load data try 3 time
     bool loadDataOk = metaClient_->waitForMetadReady(3);

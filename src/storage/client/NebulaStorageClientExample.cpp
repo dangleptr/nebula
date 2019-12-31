@@ -3,7 +3,7 @@
  * This source code is licensed under Apache 2.0 License,
  * attached with Common Clause Condition 1.0, found in the LICENSES directory.
  */
-
+#include <climits>
 #include <glog/logging.h>
 #include "NebulaStorageClient.h"
 
@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Init storage client successfully";
     auto ret = client.getNeighbors({FLAGS_vertex_id},
                                    FLAGS_edge_name,
+                                   INT_MAX,
                                    [] (nebula::Response&& resp) {
                     auto totalEdges = 0;
                     for (auto& vd : resp.vertices_) {
