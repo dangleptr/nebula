@@ -37,9 +37,7 @@ kvstore::ResultCode QueryBoundProcessor::processEdgeImpl(const PartitionID partI
                 PropsCollector collector(&writer);
                 this->collectProps(reader, k, p, &fcontext, &collector);
                 edge.set_dst(collector.getDstId());
-                if (!onlyStructure_) {
-                    edge.set_props(writer.encode());
-                }
+                edge.set_props(writer.encode());
             }
             edges.emplace_back(std::move(edge));
         });

@@ -44,6 +44,9 @@ DEFINE_int32(rocksdb_batch_size,
 DEFINE_int64(rocksdb_block_cache, 1024,
              "The default block cache size used in BlockBasedTable. The unit is MB");
 
+DEFINE_bool(enable_plain_table, false, "Enable plain table based SST");
+
+DEFINE_int32(prefix_size, 12, "The default prefix size is sizeof(PartitionID) + sizeof(VertexID)");
 
 namespace nebula {
 namespace kvstore {
@@ -74,18 +77,26 @@ rocksdb::Status initRocksdbOptions(rocksdb::Options &baseOpts) {
 
     baseOpts = rocksdb::Options(dbOpts, cfOpts);
 
-    std::unordered_map<std::string, std::string> bbtOptsMap;
-    if (!loadOptionsMap(bbtOptsMap, FLAGS_rocksdb_block_based_table_options)) {
-        return rocksdb::Status::InvalidArgument();
+    if (FLAGS_enable_plain_table) {
+        baseOpts.allow_mmap_reads = true;
+        baseOpts.table_factory.reset(rocksdb::NewPlainTableFactory());
+        baseOpts.prefix_extractor.reset(
+                rocksdb::NewFixedPrefixTransform(FLAGS_prefix_size));
+    } else {
+        std::unordered_map<std::string, std::string> bbtOptsMap;
+        if (!loadOptionsMap(bbtOptsMap, FLAGS_rocksdb_block_based_table_options)) {
+            return rocksdb::Status::InvalidArgument();
+        }
+        s = GetBlockBasedTableOptionsFromMap(rocksdb::BlockBasedTableOptions(),
+                                             bbtOptsMap,
+                                             &bbtOpts,
+                                             true);
+        if (!s.ok()) {
+            return s;
+        }
+        bbtOpts.block_cache = rocksdb::NewLRUCache(FLAGS_rocksdb_block_cache * 1024 * 1024);
+        baseOpts.table_factory.reset(NewBlockBasedTableFactory(bbtOpts));
     }
-    s = GetBlockBasedTableOptionsFromMap(rocksdb::BlockBasedTableOptions(), bbtOptsMap,
-                                         &bbtOpts, true);
-    if (!s.ok()) {
-        return s;
-    }
-
-    bbtOpts.block_cache = rocksdb::NewLRUCache(FLAGS_rocksdb_block_cache * 1024 * 1024);
-    baseOpts.table_factory.reset(NewBlockBasedTableFactory(bbtOpts));
     baseOpts.create_if_missing = true;
     return s;
 }
