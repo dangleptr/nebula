@@ -123,6 +123,7 @@ protected:
     std::unordered_map<std::string, EdgeType> edgeMap_;
     int32_t totalEdges_ = 0;
     bool onlyStructure_ = false;
+    int32_t edgesLimit_ = INT_MAX;
 };
 
 }  // namespace storage

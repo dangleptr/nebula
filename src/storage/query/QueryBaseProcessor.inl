@@ -18,6 +18,7 @@ DECLARE_bool(enable_vertex_cache);
 DECLARE_int32(slow_get_bound_ms);
 DECLARE_int32(reserved_edges_one_vertex);
 DECLARE_int32(reserved_vertices);
+DECLARE_bool(fast_path);
 
 namespace nebula {
 namespace storage {
@@ -438,7 +439,7 @@ kvstore::ResultCode QueryBaseProcessor<REQ, RESP>::collectEdgeProps(
     bool        firstLoop = true;
     int         cnt = 0;
     Getters getters;
-    for (; iter->valid() && cnt < FLAGS_max_edge_returned_per_vertex; iter->next()) {
+    for (; iter->valid() && cnt < edgesLimit_; iter->next()) {
         auto key = iter->key();
         auto val = iter->val();
         auto rank = NebulaKeyUtils::getRank(key);
@@ -592,7 +593,6 @@ void QueryBaseProcessor<REQ, RESP>::fastPath(const cpp2::GetNeighborsRequest& re
     auto edgeType = req.edge_types[0];
     std::vector<cpp2::VertexData> vd;
     vd.reserve(FLAGS_reserved_vertices);
-    auto edges_limit = std::min(FLAGS_max_edge_returned_per_vertex, req.get_edges_limit());
     for (auto& pv : req.get_parts()) {
         auto partId = pv.first;
         for (auto& vId : pv.second) {
@@ -610,7 +610,7 @@ void QueryBaseProcessor<REQ, RESP>::fastPath(const cpp2::GetNeighborsRequest& re
                 return;
             }
             int32_t cnt = 0;
-            for (; iter->valid() && cnt < edges_limit
+            for (; iter->valid() && cnt < edgesLimit_
                  ; iter->next(), cnt++) {
                 auto key = iter->key();
                 idProps.emplace_back();
@@ -637,12 +637,16 @@ void QueryBaseProcessor<REQ, RESP>::process(const cpp2::GetNeighborsRequest& req
             << ", total returned columns " << returnColumnsNum
             << ", the first column "
             << (returnColumnsNum > 0 ? req.get_return_columns()[0].name : "");
+
+    edgesLimit_ = std::min(FLAGS_max_edge_returned_per_vertex, req.get_edges_limit());
     if (req.edge_types.size() == 1
             && returnColumnsNum == 1
             && req.get_return_columns()[0].name == "_dst") {
         onlyStructure_ = true;
-        fastPath(req);
-        return;
+        if (FLAGS_fast_path) {
+            fastPath(req);
+            return;
+        }
     }
 
     VLOG(3) << "Receive request, spaceId " << spaceId_ << ", return cols " << returnColumnsNum;
