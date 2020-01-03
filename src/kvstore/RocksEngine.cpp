@@ -200,7 +200,6 @@ ResultCode RocksEngine::prefix(const std::string& prefix,
 
 ResultCode RocksEngine::put(std::string key, std::string value) {
     rocksdb::WriteOptions options;
-    options.disableWAL = FLAGS_rocksdb_disable_wal;
     rocksdb::Status status = db_->Put(options, key, value);
     if (status.ok()) {
         return ResultCode::SUCCEEDED;
@@ -217,7 +216,6 @@ ResultCode RocksEngine::multiPut(std::vector<KV> keyValues) {
         updates.Put(keyValues[i].first, keyValues[i].second);
     }
     rocksdb::WriteOptions options;
-    options.disableWAL = FLAGS_rocksdb_disable_wal;
     rocksdb::Status status = db_->Write(options, &updates);
     if (status.ok()) {
         return ResultCode::SUCCEEDED;
@@ -230,7 +228,6 @@ ResultCode RocksEngine::multiPut(std::vector<KV> keyValues) {
 
 ResultCode RocksEngine::remove(const std::string& key) {
     rocksdb::WriteOptions options;
-    options.disableWAL = FLAGS_rocksdb_disable_wal;
     auto status = db_->Delete(options, key);
     if (status.ok()) {
         return ResultCode::SUCCEEDED;
@@ -247,7 +244,6 @@ ResultCode RocksEngine::multiRemove(std::vector<std::string> keys) {
         deletes.Delete(keys[i]);
     }
     rocksdb::WriteOptions options;
-    options.disableWAL = FLAGS_rocksdb_disable_wal;
     rocksdb::Status status = db_->Write(options, &deletes);
     if (status.ok()) {
         return ResultCode::SUCCEEDED;
@@ -261,7 +257,6 @@ ResultCode RocksEngine::multiRemove(std::vector<std::string> keys) {
 ResultCode RocksEngine::removeRange(const std::string& start,
                                     const std::string& end) {
     rocksdb::WriteOptions options;
-    options.disableWAL = FLAGS_rocksdb_disable_wal;
     // TODO(sye) Given the RocksDB version we are using,
     // we should avoud using DeleteRange
     auto status = db_->DeleteRange(options, db_->DefaultColumnFamily(), start, end);
@@ -294,7 +289,6 @@ ResultCode RocksEngine::removePrefix(const std::string& prefix) {
     }
 
     rocksdb::WriteOptions writeOptions;
-    writeOptions.disableWAL = FLAGS_rocksdb_disable_wal;
     if (db_->Write(writeOptions, &batch).ok()) {
         return ResultCode::SUCCEEDED;
     } else {
@@ -321,7 +315,6 @@ void RocksEngine::addPart(PartitionID partId) {
 void RocksEngine::removePart(PartitionID partId) {
      VLOG(1) << "[partId:" << partId << "] Remove part from rocksdb ";
      rocksdb::WriteOptions options;
-     options.disableWAL = FLAGS_rocksdb_disable_wal;
      auto status = db_->Delete(options, partKey(partId));
      if (status.ok()) {
          partsNum_--;
@@ -341,7 +334,7 @@ std::vector<PartitionID> RocksEngine::allParts() {
         CHECK_EQ(key.size(), sizeof(PartitionID) + sizeof(NebulaSystemKeyType));
         PartitionID partId = *reinterpret_cast<const PartitionID*>(key.data());
         if (!NebulaKeyUtils::isSystemPart(key)) {
-            VLOG(3) << "Skip: " << std::bitset<32>(partId);
+            VLOG(1) << "Skip: " << std::bitset<32>(partId);
             iter->next();
             continue;
         }
@@ -350,6 +343,7 @@ std::vector<PartitionID> RocksEngine::allParts() {
         parts.emplace_back(partId);
         iter->next();
     }
+    LOG(INFO) << "Total parts number is " << parts.size();
     return parts;
 }
 

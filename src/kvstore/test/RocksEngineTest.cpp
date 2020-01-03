@@ -198,6 +198,33 @@ TEST(RocksEngineTest, CompactTest) {
     EXPECT_EQ(ResultCode::SUCCEEDED, engine->compact());
 }
 
+TEST(RocksEngineTest, PartsTest) {
+    fs::TempDir rootPath("/tmp/rocksdb_engine_PartsTest.XXXXXX");
+    auto engine = std::make_unique<RocksEngine>(0, rootPath.path());
+    for (int i = 0; i < 1024; i++) {
+        engine->addPart(i);
+    }
+    {
+        auto parts = engine->allParts();
+        std::sort(parts.begin(), parts.end());
+        EXPECT_EQ(1024, parts.size());
+        for (int i = 0; i < 1024; i++) {
+            CHECK_EQ(i, parts[i]);
+        }
+    }
+    for (int i = 1; i < 1024; i+=2) {
+        engine->removePart(i);
+    }
+    {
+        auto parts = engine->allParts();
+        std::sort(parts.begin(), parts.end());
+        EXPECT_EQ(512, parts.size());
+        for (int i = 0, j = 0; i < 1024; i+=2, j++) {
+            CHECK_EQ(i, parts[j]);
+        }
+    }
+}
+
 }  // namespace kvstore
 }  // namespace nebula
 
