@@ -355,6 +355,7 @@ std::pair<int64_t, int64_t> Part::commitSnapshot(const std::vector<std::string>&
 }
 
 ResultCode Part::putCommitMsg(WriteBatch* batch, LogID committedLogId, TermID committedLogTerm) {
+    VLOG(1) << idStr_ << "Put committedLogId " << committedLogId;
     std::string commitMsg;
     commitMsg.reserve(sizeof(LogID) + sizeof(TermID));
     commitMsg.append(reinterpret_cast<char*>(&committedLogId), sizeof(LogID));

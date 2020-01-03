@@ -143,7 +143,7 @@ ResultCode RocksEngine::get(const std::string& key, std::string* value) {
     if (status.ok()) {
         return ResultCode::SUCCEEDED;
     } else if (status.IsNotFound()) {
-        VLOG(3) << "Get: " << key << " Not Found";
+        VLOG(1) << "Get: " << key << " Not Found";
         return ResultCode::ERR_KEY_NOT_FOUND;
     } else {
         VLOG(3) << "Get Failed: " << key << " " << status.ToString();
@@ -205,7 +205,7 @@ ResultCode RocksEngine::put(std::string key, std::string value) {
     if (status.ok()) {
         return ResultCode::SUCCEEDED;
     } else {
-        VLOG(3) << "Put Failed: " << key << status.ToString();
+        VLOG(1) << "Put Failed: " << key << status.ToString();
         return ResultCode::ERR_UNKNOWN;
     }
 }
@@ -309,6 +309,7 @@ std::string RocksEngine::partKey(PartitionID partId) {
 
 
 void RocksEngine::addPart(PartitionID partId) {
+    VLOG(1) << "[partId:" << partId << "] Add part into rocksdb ";
     auto ret = put(partKey(partId), "");
     if (ret == ResultCode::SUCCEEDED) {
         partsNum_++;
@@ -318,6 +319,7 @@ void RocksEngine::addPart(PartitionID partId) {
 
 
 void RocksEngine::removePart(PartitionID partId) {
+     VLOG(1) << "[partId:" << partId << "] Remove part from rocksdb ";
      rocksdb::WriteOptions options;
      options.disableWAL = FLAGS_rocksdb_disable_wal;
      auto status = db_->Delete(options, partKey(partId));
