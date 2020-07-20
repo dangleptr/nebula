@@ -9,6 +9,8 @@
 #include "meta/SchemaProviderIf.h"
 #include "dataman/SchemaWriter.h"
 
+DECLARE_bool(trace_rpc_request);
+
 namespace nebula {
 namespace graph {
 FetchVerticesExecutor::FetchVerticesExecutor(Sentence *sentence, ExecutionContext *ectx)
@@ -153,6 +155,17 @@ void FetchVerticesExecutor::fetchVertices() {
             for (auto &error : result.failedParts()) {
                 LOG(ERROR) << "part: " << error.first
                            << "error code: " << static_cast<int>(error.second);
+            }
+        }
+        if (FLAGS_trace_rpc_request) {
+            const auto& results = result.responses();
+            const auto& hostsLatency = result.hostLatency();
+            int i = 0;
+            for (auto& resp : results) {
+                LOG(INFO) << "@@ TRACE RPC @@ response size is " << resp.vertices.size()
+                          << " from " << std::get<0>(hostsLatency[i])
+                          << ", latency on storaged " << std::get<1>(hostsLatency[i])
+                          << "ms, latency e2e " << std::get<2>(hostsLatency[i]) << "ms";
             }
         }
         if (!sentence_->isAllTagProps()) {

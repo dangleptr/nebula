@@ -10,6 +10,7 @@
 #include <folly/Try.h>
 
 DECLARE_int32(storage_client_timeout_ms);
+DECLARE_bool(trace_rpc_request);
 
 namespace nebula {
 namespace storage {
@@ -104,6 +105,9 @@ folly::SemiFuture<StorageRpcResponse<Response>> StorageClient::collectResponse(
                          res,
                          duration,
                          getPartIDFunc] () mutable {
+            if (FLAGS_trace_rpc_request) {
+                LOG(INFO) << "@@ TRACE RPC @@ Send rpc to " << host;
+            }
             auto client = clientsMan_->client(host, evb, false, FLAGS_storage_client_timeout_ms);
             // Result is a pair of <Request&, bool>
             auto start = time::WallClock::fastNowInMicroSec();
@@ -120,7 +124,10 @@ folly::SemiFuture<StorageRpcResponse<Response>> StorageClient::collectResponse(
                             start] (folly::Try<Response>&& val) {
                 auto& r = context->findRequest(host);
                 if (val.hasException()) {
-                    LOG(ERROR) << "Request to " << host << " failed: " << val.exception().what();
+                    if (FLAGS_trace_rpc_request) {
+                        LOG(ERROR) << "@@ TRACE RPC @@ Request to " << host
+                                   << " failed: " << val.exception().what();
+                    }
                     for (auto& part : r.parts) {
                         auto partId = getPartIDFunc(part);
                         VLOG(3) << "Exception! Failed part " << partId;
@@ -135,8 +142,12 @@ folly::SemiFuture<StorageRpcResponse<Response>> StorageClient::collectResponse(
                     auto& result = resp.get_result();
                     bool hasFailure{false};
                     for (auto& code : result.get_failed_codes()) {
-                        VLOG(3) << "Failure! Failed part " << code.get_part_id()
-                                << ", failed code " << static_cast<int32_t>(code.get_code());
+                        if (FLAGS_trace_rpc_request) {
+                            LOG(ERROR) << "@@ TRACE RPC @@ Failure! Failed part "
+                                       << code.get_part_id()
+                                       << ", failed code "
+                                       << static_cast<int32_t>(code.get_code());
+                        }
                         hasFailure = true;
                         if (code.get_code() == storage::cpp2::ErrorCode::E_LEADER_CHANGED) {
                             auto* leader = code.get_leader();

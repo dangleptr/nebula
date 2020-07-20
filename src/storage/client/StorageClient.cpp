@@ -8,6 +8,7 @@
 #include "storage/client/StorageClient.h"
 
 DEFINE_int32(storage_client_timeout_ms, 60 * 1000, "storage client timeout");
+DEFINE_bool(trace_rpc_request, false, "");
 
 namespace nebula {
 namespace storage {
