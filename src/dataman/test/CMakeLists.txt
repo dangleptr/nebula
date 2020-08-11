@@ -56,6 +56,13 @@ nebula_add_executable(
     LIBRARIES ${THRIFT_LIBRARIES} follybenchmark wangle boost_regex
 )
 
+nebula_add_executable(
+    NAME row_reader_vs_json_bm
+    SOURCES RowReaderVSJson.cpp
+    OBJECTS ${DATAMAN_TEST_LIBS}
+    LIBRARIES ${THRIFT_LIBRARIES} follybenchmark wangle boost_regex
+)
+
 nebula_add_test(
     NAME nebula_codec_test
     SOURCES NebulaCodecTest.cpp
