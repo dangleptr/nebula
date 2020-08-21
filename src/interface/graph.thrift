@@ -4,11 +4,12 @@
  * attached with Common Clause Condition 1.0, found in the LICENSES directory.
  */
 
-include "common.thrift"
 
 namespace cpp nebula.graph
 namespace java com.vesoft.nebula.graph
 namespace go nebula.graph
+
+include "common.thrift"
 
 enum ErrorCode {
     SUCCEEDED = 0,
@@ -37,7 +38,6 @@ enum ErrorCode {
 } (cpp.enum_strict)
 
 
-typedef i64 IdType
 typedef i64 Timestamp
 typedef i16 Year
 struct YearMonth {
@@ -81,7 +81,7 @@ union ColumnValue {
     // Simple types
     1: bool bool_val,
     2: i64 integer;
-    3: IdType id;
+    3: common.VertexID id;
     4: float single_precision;
     5: double double_precision;
     6: binary str;

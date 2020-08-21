@@ -406,7 +406,7 @@ folly::Future<StatusOr<cpp2::GetUUIDResp>> StorageClient::getUUID(
     std::pair<HostAddr, cpp2::GetUUIDReq> request;
     std::hash<std::string> hashFunc;
     auto hashValue = hashFunc(name);
-    auto status = partId(space, hashValue);
+    auto status = partId(space, VertexID(hashValue));
     if (!status.ok()) {
         return folly::makeFuture<StatusOr<cpp2::GetUUIDResp>>(status.status());
     }
@@ -436,14 +436,14 @@ folly::Future<StatusOr<cpp2::GetUUIDResp>> StorageClient::getUUID(
     });
 }
 
-StatusOr<PartitionID> StorageClient::partId(GraphSpaceID spaceId, int64_t id) const {
+StatusOr<PartitionID> StorageClient::partId(GraphSpaceID spaceId, const VertexID& id) const {
     auto status = partsNum(spaceId);
     if (!status.ok()) {
         return Status::Error("Space not found, spaceid: %d", spaceId);
     }
 
     auto parts = status.value();
-    auto s = ID_HASH(id, parts);
+    auto s = ID_HASH(id.first, parts);
     CHECK_GE(s, 0U);
     return s;
 }
@@ -453,7 +453,7 @@ StorageClient::put(GraphSpaceID space,
                    std::vector<nebula::cpp2::Pair> values,
                    folly::EventBase* evb) {
     auto status = clusterIdsToHosts(space, values, [](const nebula::cpp2::Pair& v) {
-        return std::hash<std::string>{}(v.get_key());
+        return VertexID(std::hash<std::string>{}(v.get_key()));
     });
 
     if (!status.ok()) {
@@ -486,7 +486,7 @@ StorageClient::get(GraphSpaceID space,
                    bool returnPartly,
                    folly::EventBase* evb) {
     auto status = clusterIdsToHosts(
-        space, keys, [](const std::string& v) { return std::hash<std::string>{}(v); });
+        space, keys, [](const std::string& v) { return VertexID(std::hash<std::string>{}(v)); });
 
     if (!status.ok()) {
         return folly::makeFuture<StorageRpcResponse<storage::cpp2::GeneralResponse>>(

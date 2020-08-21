@@ -214,7 +214,7 @@ public:
                   TagID tagFrom = 0,
                   TagID tagTo = 10) {
         std::vector<cpp2::Vertex> vertices;
-        for (VertexID vId = vIdFrom;  vId < vIdTo; vId++) {
+        for (VertexID vId = vIdFrom;  vId < vIdTo; vId.first++) {
               std::vector<cpp2::Tag> tags;
               for (TagID tId = tagFrom; tId < tagTo; tId++) {
                   cpp2::Tag t;
@@ -278,10 +278,10 @@ public:
                int32_t versionNum = 1,
                std::string fmt = "%d_%d_%ld_%ld_%d_%ld") {
         std::vector<cpp2::Edge> edges;
-        for (VertexID srcId = srcFrom; srcId < srcTo; srcId++) {
+        for (VertexID srcId = srcFrom; srcId < srcTo; srcId.first++) {
             for (SchemaVer version = 0; version < versionNum; version++) {
-                VertexID dstId = srcId * 100 + 2;
-                EdgeRanking ranking = srcId * 100 + 3;
+                VertexID dstId = srcId.first * 100 + 2;
+                EdgeRanking ranking = srcId.first * 100 + 3;
                 cpp2::EdgeKey key;
                 key.set_src(srcId);
                 key.set_edge_type(edgeType);

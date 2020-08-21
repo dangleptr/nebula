@@ -21,13 +21,6 @@ enum class ResultType {
 };
 
 
-using FieldValue = boost::variant<bool, int64_t, float, double, std::string>;
-#define VALUE_TYPE_BOOL 0
-#define VALUE_TYPE_INT 1
-#define VALUE_TYPE_FLOAT 2
-#define VALUE_TYPE_DOUBLE 3
-#define VALUE_TYPE_STRING 4
-
 template<typename IntType>
 typename std::enable_if<
     std::is_integral<

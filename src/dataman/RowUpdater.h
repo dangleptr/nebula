@@ -63,8 +63,8 @@ public:
     ResultType getString(const folly::StringPiece name,
                          folly::StringPiece& v) const noexcept;
 
-    ResultType setVid(const folly::StringPiece name, int64_t v) noexcept;
-    ResultType getVid(const folly::StringPiece name, int64_t& v) const noexcept;
+    ResultType setVid(const folly::StringPiece name, VertexID v) noexcept;
+    ResultType getVid(const folly::StringPiece name, VertexID& v) const noexcept;
 
     Status writeDefaultValue(const folly::StringPiece name, RowWriter &writer) const noexcept;
 
@@ -81,7 +81,7 @@ private:
     std::shared_ptr<const meta::SchemaProviderIf> schema_;
     RowReader reader_ = RowReader::getEmptyRowReader();
     // Hash64(field_name) => value
-    std::unordered_map<uint64_t, FieldValue> updatedFields_;
+    std::unordered_map<uint64_t, VariantType> updatedFields_;
 };
 
 }  // namespace nebula

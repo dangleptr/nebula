@@ -110,7 +110,7 @@ static constexpr size_t MAX_ABS_INTEGER = 9223372036854775808ULL;
 %token KW_DROP KW_REMOVE KW_SPACES KW_INGEST KW_INDEX KW_INDEXES
 %token KW_IF KW_NOT KW_EXISTS KW_WITH
 %token KW_COUNT KW_COUNT_DISTINCT KW_SUM KW_AVG KW_MAX KW_MIN KW_STD KW_BIT_AND KW_BIT_OR KW_BIT_XOR
-%token KW_BY KW_DOWNLOAD KW_HDFS KW_UUID KW_CONFIGS KW_FORCE KW_STATUS
+%token KW_BY KW_DOWNLOAD KW_HDFS KW_CONFIGS KW_FORCE KW_STATUS
 %token KW_GET KW_DECLARE KW_GRAPH KW_META KW_STORAGE
 %token KW_TTL KW_TTL_DURATION KW_TTL_COL KW_DATA KW_STOP
 %token KW_FETCH KW_PROP KW_UPDATE KW_UPSERT KW_WHEN
@@ -152,7 +152,6 @@ static constexpr size_t MAX_ABS_INTEGER = 9223372036854775808ULL;
 %type <expr> vid_ref_expression
 %type <expr> vid
 %type <expr> function_call_expression
-%type <expr> uuid_expression
 %type <argument_list> argument_list opt_argument_list
 %type <type> type_spec
 %type <step_clause> step_clause
@@ -283,7 +282,6 @@ unreserved_keyword
      | KW_PATH               { $$ = new std::string("path"); }
      | KW_DATA               { $$ = new std::string("data"); }
      | KW_LEADER             { $$ = new std::string("leader"); }
-     | KW_UUID               { $$ = new std::string("uuid"); }
      | KW_JOB                { $$ = new std::string("job"); }
      | KW_JOBS               { $$ = new std::string("jobs"); }
      | KW_BIDIRECT           { $$ = new std::string("bidirect"); }
@@ -441,11 +439,6 @@ function_call_expression
     }
     ;
 
-uuid_expression
-    : KW_UUID L_PAREN STRING R_PAREN {
-        $$ = new UUIDExpression($3);
-    }
-    ;
 
 opt_argument_list
     : %empty {
@@ -647,9 +640,6 @@ vid
         $$ = new PrimaryExpression($1);
     }
     | function_call_expression {
-        $$ = $1;
-    }
-    | uuid_expression {
         $$ = $1;
     }
     ;

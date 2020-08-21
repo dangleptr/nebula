@@ -641,12 +641,12 @@ std::string FindPathExecutor::buildPathString(const Path &path) {
         auto type = std::get<1>(*step);
         auto ranking = std::get<2>(*step);
         if (type < 0) {
-            pathStr += folly::to<std::string>(id);
+            pathStr += folly::stringPrintf("%ld_%ld", id.first, id.second);
             ++iter;
             break;
         }
 
-        pathStr += folly::stringPrintf("%ld<%d,%ld>", id, type, ranking);
+        pathStr += folly::stringPrintf("%ld_%ld<%d,%ld>", id.first, id.second, type, ranking);
     }
 
     for (; iter != path.end(); ++iter) {
@@ -655,7 +655,7 @@ std::string FindPathExecutor::buildPathString(const Path &path) {
         auto type = std::get<1>(*step);
         auto ranking = std::get<2>(*step);
 
-        pathStr += folly::stringPrintf("<%d,%ld>%ld", -type, ranking, id);
+        pathStr += folly::stringPrintf("<%d,%ld>%ld_%ld", -type, ranking, id.first, id.second);
     }
 
     return pathStr;

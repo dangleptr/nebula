@@ -84,11 +84,12 @@ NebulaCodecImpl::decode(std::string encoded,
                 code = reader->getString(field, piece);
                 PRINT_ERROR_MESSAGE(code, piece.toString());
                 break;
-            case cpp2::SupportedType::VID:
-                int64_t v;
+            case cpp2::SupportedType::VID: {
+                VertexID v;
                 code = reader->getVid(field, v);
-                PRINT_ERROR_MESSAGE(code, v);
+                PRINT_ERROR_MESSAGE(code, v.first);
                 break;
+            }
             case cpp2::SupportedType::FLOAT:
                 float f;
                 code = reader->getFloat(field, f);

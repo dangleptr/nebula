@@ -23,7 +23,7 @@ public:
 
     virtual void collectDstId(VertexID) {}
 
-    virtual void collectVid(int64_t v, const PropContext& prop) = 0;
+    virtual void collectVid(const VertexID& v, const PropContext& prop) = 0;
 
     virtual void collectBool(bool v, const PropContext& prop) = 0;
 
@@ -44,7 +44,7 @@ public:
         dstId_ = dstId;
     }
 
-    void collectVid(int64_t v, const PropContext& prop) override {
+    void collectVid(const VertexID& v, const PropContext& prop) override {
         (*writer_) << v;
         VLOG(3) << "collect vid: " << prop.prop_.name << ", value = " << v;
     }
@@ -88,7 +88,7 @@ class StatsCollector : public Collector {
 public:
     StatsCollector() = default;
 
-    void collectVid(int64_t v, const PropContext& prop) override {
+    void collectVid(const VertexID& v, const PropContext& prop) override {
         UNUSED(v);
         UNUSED(prop);
     }

@@ -53,7 +53,7 @@ public:
                 return std::hash<int64_t>()(col.get_integer());
             }
             case ColumnType::id_type: {
-                return std::hash<int64_t>()(col.get_id());
+                return std::hash<VertexID>()(col.get_id());
             }
             case ColumnType::float_type: {
                 return std::hash<double>()(col.get_single_precision());
@@ -179,9 +179,6 @@ public:
             switch (sum_.getType()) {
                 case ColumnType::int_type:
                     sum_.set_integer(sum_.get_integer() + val.get_integer());
-                    break;
-                case ColumnType::id_type:
-                    sum_.set_id(sum_.get_id() + val.get_id());
                     break;
                 case ColumnType::double_type:
                     sum_.set_double_precision(sum_.get_double_precision() +

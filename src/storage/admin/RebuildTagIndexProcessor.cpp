@@ -45,7 +45,7 @@ void RebuildTagIndexProcessor::process(const cpp2::RebuildIndexRequest& req) {
             std::vector<kvstore::KV> data;
             data.reserve(FLAGS_rebuild_index_batch_num);
             int32_t batchNum = 0;
-            VertexID currentVertex = -1;
+            VertexID currentVertex;
             while (iter && iter->valid()) {
                 if (batchNum >= FLAGS_rebuild_index_batch_num) {
                     auto result = doSyncPut(space, part, std::move(data));

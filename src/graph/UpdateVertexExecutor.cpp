@@ -204,7 +204,9 @@ void UpdateVertexExecutor::execute() {
     auto *runner = ectx()->rctx()->runner();
     auto cb = [this] (auto &&resp) {
         if (!resp.ok()) {
-            doError(Status::Error("Insert vertex `%ld' failed.", vertex_));
+            doError(Status::Error("Insert vertex `%ld_%ld' failed.",
+                                  vertex_.first,
+                                  vertex_.second));
             return;
         }
         auto rpcResp = std::move(resp).value();
@@ -235,8 +237,8 @@ void UpdateVertexExecutor::execute() {
         this->finishExecution(std::move(rpcResp));
     };
     auto error = [this] (auto &&e) {
-        auto msg = folly::stringPrintf("Insert vertex `%ld' exception: %s",
-                vertex_, e.what().c_str());
+        auto msg = folly::stringPrintf("Insert vertex `%ld_%ld' exception: %s",
+                vertex_.first, vertex_.second, e.what().c_str());
         LOG(ERROR) << msg;
         doError(Status::Error(std::move(msg)));
     };

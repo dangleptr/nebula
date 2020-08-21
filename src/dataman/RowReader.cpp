@@ -36,7 +36,7 @@ ResultType RowReader::Cell::getString(folly::StringPiece& v) const noexcept {
 }
 
 
-ResultType RowReader::Cell::getVid(int64_t& v) const noexcept {
+ResultType RowReader::Cell::getVid(VertexID& v) const noexcept {
     RR_CELL_GET_VALUE(Vid);
 }
 
@@ -315,7 +315,7 @@ int64_t RowReader::skipToNext(int64_t index, int64_t offset) const noexcept {
         }
         case cpp2::SupportedType::VID: {
             // Eight bytes
-            offset += sizeof(int64_t);
+            offset += sizeof(VertexID);
             break;
         }
         default: {
@@ -413,10 +413,14 @@ int32_t RowReader::readInt64(int64_t offset, int64_t& v) const noexcept {
 }
 
 
-int32_t RowReader::readVid(int64_t offset, int64_t& v) const noexcept {
-    return readInt64(offset, v);
-}
+int32_t RowReader::readVid(int64_t offset, VertexID& v) const noexcept {
+    if (offset + sizeof(VertexID) > data_.size()) {
+        return static_cast<int32_t>(ResultType::E_DATA_INVALID);
+    }
 
+    memcpy(reinterpret_cast<char*>(&v), &(data_[offset]), sizeof(VertexID));
+    return sizeof(VertexID);
+}
 
 ResultType RowReader::getBool(int64_t index, int64_t& offset, bool& v)
         const noexcept {
@@ -551,14 +555,6 @@ ResultType RowReader::getInt64(int64_t index, int64_t& offset, int64_t& v)
             offset += numBytes;
             break;
         }
-        case cpp2::SupportedType::VID: {
-            int32_t numBytes = readVid(offset, v);
-            if (numBytes < 0) {
-                return static_cast<ResultType>(numBytes);
-            }
-            offset += numBytes;
-            break;
-        }
         default: {
             return ResultType::E_INCOMPATIBLE_TYPE;
         }
@@ -568,13 +564,19 @@ ResultType RowReader::getInt64(int64_t index, int64_t& offset, int64_t& v)
 }
 
 
-ResultType RowReader::getVid(int64_t index, int64_t& offset, int64_t& v)
+ResultType RowReader::getVid(int64_t index, int64_t& offset, VertexID& v)
         const noexcept {
     auto fieldType = schema_->getFieldType(index).get_type();
-    if (fieldType == cpp2::SupportedType::INT || fieldType == cpp2::SupportedType::VID)
-        return getInt64(index, offset, v);
-    else
+    if (fieldType == cpp2::SupportedType::VID) {
+        int32_t numBytes = readVid(offset, v);
+        if (numBytes < 0) {
+            return static_cast<ResultType>(numBytes);
+        }
+        offset += numBytes;
+        return ResultType::SUCCEEDED;
+    } else {
         return ResultType::E_INCOMPATIBLE_TYPE;
+    }
 }
 
 
@@ -627,9 +629,9 @@ ResultType RowReader::getString(int64_t index, folly::StringPiece& v)
 }
 
 
-ResultType RR_GET_VALUE_BY_NAME(Vid, int64_t)
+ResultType RR_GET_VALUE_BY_NAME(Vid, VertexID)
 
-ResultType RowReader::getVid(int64_t index, int64_t& v) const noexcept {
+ResultType RowReader::getVid(int64_t index, VertexID& v) const noexcept {
     RR_GET_OFFSET()
     return getVid(index, offset, v);
 }

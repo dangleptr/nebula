@@ -192,7 +192,7 @@ public:
 
 protected:
     // Calculate the partition id for the given vertex id
-    StatusOr<PartitionID> partId(GraphSpaceID spaceId, int64_t id) const;
+    StatusOr<PartitionID> partId(GraphSpaceID spaceId, const VertexID& id) const;
 
     const HostAddr leader(const PartMeta& partMeta) const {
         loadLeader();

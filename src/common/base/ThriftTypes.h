@@ -8,6 +8,7 @@
 #define COMMON_BASE_THRIFTTYPES_H_
 
 #include <cstdint>
+#include "base/VertexID.h"
 
 namespace nebula {
 
@@ -19,8 +20,6 @@ using TermID = int64_t;
 using LogID = int64_t;
 using IPv4 = int32_t;
 using Port = int32_t;
-
-using VertexID = int64_t;
 using TagID = int32_t;
 using TagVersion = int64_t;
 using EdgeType = int32_t;
@@ -30,5 +29,6 @@ using SchemaVer = int64_t;
 using IndexID = int32_t;
 
 }  // namespace nebula
+
 #endif  // COMMON_BASE_THRIFTTYPES_H_
 

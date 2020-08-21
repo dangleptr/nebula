@@ -190,6 +190,9 @@ RowWriter& RowWriter::operator<<(const char* v) noexcept {
     return operator<<(folly::StringPiece(v));
 }
 
+RowWriter& RowWriter::operator<<(const VertexID& v) noexcept {
+    return operator<<(v.first)<<(v.second);
+}
 
 /****************************
  *

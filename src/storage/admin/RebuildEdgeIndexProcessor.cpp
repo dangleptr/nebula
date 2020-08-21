@@ -45,8 +45,8 @@ void RebuildEdgeIndexProcessor::process(const cpp2::RebuildIndexRequest& req) {
             std::vector<kvstore::KV> data;
             data.reserve(FLAGS_rebuild_index_batch_num);
             int32_t batchNum = 0;
-            VertexID currentSrcVertex = -1;
-            VertexID currentDstVertex = -1;
+            VertexID currentSrcVertex;
+            VertexID currentDstVertex;
             while (iter && iter->valid()) {
                 if (batchNum >= FLAGS_rebuild_index_batch_num) {
                     auto result = doSyncPut(space, part, std::move(data));

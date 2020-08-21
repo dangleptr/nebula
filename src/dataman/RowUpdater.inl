@@ -34,7 +34,7 @@ RowUpdater::getInt(const folly::StringPiece name, T& v) const noexcept {
     RU_CHECK_UPDATED_FIELDS(Int)
 
     switch (it->second.which()) {
-    case VALUE_TYPE_INT:
+    case VAR_INT64:
         v = boost::get<int64_t>(it->second);
         break;
     default:

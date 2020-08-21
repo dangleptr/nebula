@@ -127,7 +127,6 @@ PROP                        ([Pp][Rr][Oo][Pp])
 ALL                         ([Aa][Ll][Ll])
 BALANCE                     ([Bb][Aa][Ll][Aa][Nn][Cc][Ee])
 LEADER                      ([Ll][Ee][Aa][Dd][Ee][Rr])
-UUID                        ([Uu][Uu][Ii][Dd])
 OF                          ([Oo][Ff])
 DATA                        ([Dd][Aa][Tt][Aa])
 STOP                        ([Ss][Tt][Oo][Pp])
@@ -274,7 +273,6 @@ RECOVER                     ([Rr][Ee][Cc][Oo][Vv][Ee][Rr])
 {COLLATION}                 { return TokenType::KW_COLLATION; }
 {ALL}                       { return TokenType::KW_ALL; }
 {LEADER}                    { return TokenType::KW_LEADER; }
-{UUID}                      { return TokenType::KW_UUID; }
 {DATA}                      { return TokenType::KW_DATA; }
 {SNAPSHOT}                  { return TokenType::KW_SNAPSHOT; }
 {SNAPSHOTS}                 { return TokenType::KW_SNAPSHOTS; }

@@ -81,8 +81,12 @@ void CmdProcessor::calColumnWidths(
                     break;
                 }
                 case cpp2::ColumnValue::Type::id: {
-                    GET_VALUE_WIDTH(int64_t, id, "%ld");
-
+                    auto& val = col.get_id();
+                    size_t len = folly::stringPrintf("%ld_%ld", val.first, val.second).size();
+                    if (widths[idx] < len) {
+                        widths[idx] = len;
+                        genFmt = true;
+                    }
                     if (genFmt) {
                         formats[idx] = folly::stringPrintf(" %%-%ldld |", widths[idx]);
                     }
@@ -190,7 +194,9 @@ void CmdProcessor::calColumnWidths(
                         if (entry.getType() ==  cpp2::PathEntry::vertex) {
                             auto v = entry.get_vertex();
                             auto id = v.get_id();
-                            size_t idLen = folly::stringPrintf("%ld", id).size();
+                            size_t idLen = folly::stringPrintf("%ld_%ld",
+                                                               id.first,
+                                                               id.second).size();
                             if (widths[entryIdx] < idLen) {
                                 widths[entryIdx] = idLen;
                                 genFmt = true;

@@ -12,7 +12,7 @@ namespace nebula {
 
 TEST(NebulaKeyUtilsTest, SimpleTest) {
     PartitionID partId = 15;
-    VertexID srcId = 1001L, dstId = 2001L;
+    VertexID srcId(1001L), dstId(2001L);
     TagID tagId = 1001;
     TagVersion tagVersion = 20L;
     EdgeType type = 101;

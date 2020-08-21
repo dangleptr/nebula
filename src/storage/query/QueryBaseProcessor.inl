@@ -490,7 +490,7 @@ kvstore::ResultCode QueryBaseProcessor<REQ, RESP>::collectEdgeProps(
     }
 
     EdgeRanking lastRank  = -1;
-    VertexID    lastDstId = 0;
+    VertexID    lastDstId(0);
     bool        firstLoop = true;
     int         cnt = 0;
     bool onlyStructure = onlyStructures_[edgeType];

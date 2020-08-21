@@ -28,7 +28,7 @@ public:
         }
         if (FLAGS_vertex_id != 0) {
             auto partId = FLAGS_vertex_id % FLAGS_parts_num + 1;
-            auto prefix = NebulaKeyUtils::edgePrefix(partId, FLAGS_vertex_id);
+            auto prefix = NebulaKeyUtils::edgePrefix(partId, VertexID(FLAGS_vertex_id));
             iter->Seek(prefix);
         } else {
             iter->SeekToFirst();

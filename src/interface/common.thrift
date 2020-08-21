@@ -10,21 +10,25 @@ namespace java com.vesoft.nebula
 namespace go nebula
 
 cpp_include "base/ThriftTypes.h"
+cpp_include "base/VertexIDOps.h"
 
 typedef i32 (cpp.type = "nebula::GraphSpaceID") GraphSpaceID
 typedef i32 (cpp.type = "nebula::PartitionID") PartitionID
 typedef i32 (cpp.type = "nebula::TagID") TagID
 typedef i32 (cpp.type = "nebula::EdgeType") EdgeType
 typedef i64 (cpp.type = "nebula::EdgeRanking") EdgeRanking
-typedef i64 (cpp.type = "nebula::VertexID") VertexID
 typedef i32 (cpp.type = "nebula::IndexID") IndexID
-
 typedef i32 (cpp.type = "nebula::IPv4") IPv4
 typedef i32 (cpp.type = "nebula::Port") Port
 
 typedef i64 (cpp.type = "nebula::SchemaVer") SchemaVer
 
 typedef i64 (cpp.type = "nebula::ClusterID") ClusterID
+
+struct VertexID {
+    1: i64 first;
+    2: i64 second;
+} (cpp.type = "nebula::VertexID")
 
 // These are all data types supported in the graph properties
 enum SupportedType {
@@ -43,7 +47,7 @@ enum SupportedType {
     YEAR = 22,
     YEARMONTH = 23,
     DATE = 24,
-    DATETIME = 25,
+    // datetime = 25,
 
     // Graph specific
     PATH = 41,

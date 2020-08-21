@@ -7,7 +7,7 @@ nebula_add_library(
     RowReader.cpp
     RowUpdater.cpp
     RowWriter.cpp
-    NebulaCodecImpl.cpp
+    #    NebulaCodecImpl.cpp
 )
 
 nebula_add_subdirectory(test)

@@ -8,4 +8,4 @@ nebula_add_library(
     geo/GeoParams.cpp
 )
 
-nebula_add_subdirectory(test)
+#nebula_add_subdirectory(test)

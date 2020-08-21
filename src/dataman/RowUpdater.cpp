@@ -65,7 +65,7 @@ Status RowUpdater::encodeTo(std::string& encoded) const noexcept {
                 break;
             }
             case cpp2::SupportedType::VID: {
-                RU_OUTPUT_VALUE(int64_t, Vid);
+                RU_OUTPUT_VALUE(VertexID, Vid);
                 break;
             }
             default: {
@@ -169,7 +169,7 @@ ResultType RowUpdater::setString(const folly::StringPiece name,
 
 
 ResultType RowUpdater::setVid(const folly::StringPiece name,
-                              int64_t v) noexcept {
+                              VertexID v) noexcept {
     RU_GET_TYPE_BY_NAME()
 
     uint64_t hash;
@@ -222,13 +222,13 @@ ResultType RowUpdater::getBool(const folly::StringPiece name,
     RU_CHECK_UPDATED_FIELDS(Bool)
 
     switch (it->second.which()) {
-    case VALUE_TYPE_BOOL:
+    case VAR_BOOL:
         v = boost::get<bool>(it->second);
         break;
-    case VALUE_TYPE_INT:
+    case VAR_INT64:
         v = intToBool(boost::get<int64_t>(it->second));
         break;
-    case VALUE_TYPE_STRING:
+    case VAR_STR:
         v = strToBool(boost::get<std::string>(it->second));
         break;
     default:
@@ -244,10 +244,7 @@ ResultType RowUpdater::getFloat(const folly::StringPiece name,
     RU_CHECK_UPDATED_FIELDS(Float)
 
     switch (it->second.which()) {
-    case VALUE_TYPE_FLOAT:
-        v = boost::get<float>(it->second);
-        break;
-    case VALUE_TYPE_DOUBLE:
+    case VAR_DOUBLE:
         v = boost::get<double>(it->second);
         break;
     default:
@@ -263,10 +260,7 @@ ResultType RowUpdater::getDouble(const folly::StringPiece name,
     RU_CHECK_UPDATED_FIELDS(Double)
 
     switch (it->second.which()) {
-    case VALUE_TYPE_FLOAT:
-        v = boost::get<float>(it->second);
-        break;
-    case VALUE_TYPE_DOUBLE:
+    case VAR_DOUBLE:
         v = boost::get<double>(it->second);
         break;
     default:
@@ -282,7 +276,7 @@ ResultType RowUpdater::getString(const folly::StringPiece name,
     RU_CHECK_UPDATED_FIELDS(String)
 
     switch (it->second.which()) {
-    case VALUE_TYPE_STRING:
+    case VAR_STR:
         v = boost::get<std::string>(it->second);
         break;
     default:
@@ -294,12 +288,12 @@ ResultType RowUpdater::getString(const folly::StringPiece name,
 
 
 ResultType RowUpdater::getVid(const folly::StringPiece name,
-                              int64_t& v) const noexcept {
+                              VertexID& v) const noexcept {
     RU_CHECK_UPDATED_FIELDS(Vid)
 
     switch (it->second.which()) {
-    case VALUE_TYPE_INT:
-        v = boost::get<int64_t>(it->second);
+    case VAR_VID:
+        v = boost::get<VertexID>(it->second);
         break;
     default:
         return ResultType::E_INCOMPATIBLE_TYPE;

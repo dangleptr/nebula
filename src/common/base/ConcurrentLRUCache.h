@@ -214,7 +214,6 @@ public:
                 // cache is full, evict the least recently used item
                 evict();
             }
-            VLOG(3) << "Insert key " << key << ", val " << value;
             list_.push_front(key);
             map_.emplace(std::forward<key_type>(key),
                          std::make_tuple(std::forward<value_type>(value), list_.begin()));
@@ -232,7 +231,6 @@ public:
         typename map_type::iterator i = map_.find(key);
         if (i == map_.end()) {
             // value not in cache
-            VLOG(3) << key  << " not found!";
             return boost::none;
         }
 
@@ -249,7 +247,6 @@ public:
             j = list_.begin();
             std::get<1>(i->second) = j;
         }
-        VLOG(3) << "Get key : " << key << ", val: " << value;
         hits_++;
         return value;
     }
@@ -290,7 +287,6 @@ private:
     void evict() {
         // evict item from the end of most recently used list
         typename list_type::iterator i = --list_.end();
-        VLOG(3) << "Evict the oldest key " << *i;
         map_.erase(*i);
         list_.erase(i);
         evicts_++;

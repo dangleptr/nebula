@@ -120,8 +120,8 @@ public:
 
 private:
     std::vector<VertexID> randomVertices() {
-        return {FLAGS_min_vertex_id
-                + folly::Random::rand32(FLAGS_max_vertex_id - FLAGS_min_vertex_id)};
+        return {VertexID(FLAGS_min_vertex_id
+                + folly::Random::rand32(FLAGS_max_vertex_id - FLAGS_min_vertex_id))};
     }
 
     std::vector<storage::cpp2::PropDef> randomCols() {
@@ -162,10 +162,10 @@ private:
 
     std::vector<storage::cpp2::Vertex> genVertices() {
         std::vector<storage::cpp2::Vertex> vertices;
-        static VertexID vId = FLAGS_min_vertex_id;
+        static VertexID vId(FLAGS_min_vertex_id);
         for (int i = 0; i < FLAGS_batch_num; i++) {
             storage::cpp2::Vertex v;
-            v.set_id(vId++);
+            v.set_id(vId.first++);
             decltype(v.tags) tags;
             storage::cpp2::Tag tag;
             tag.set_tag_id(tagId_);
@@ -180,18 +180,18 @@ private:
 
     std::vector<storage::cpp2::Edge> genEdges() {
         std::vector<storage::cpp2::Edge> edges;
-        static VertexID vId = FLAGS_min_vertex_id;
+        static VertexID vId(FLAGS_min_vertex_id);
         storage::cpp2::Edge edge;
         storage::cpp2::EdgeKey eKey;
         eKey.set_src(vId);
         eKey.set_edge_type(edgeType_);
-        eKey.set_dst(vId + 1);
+        eKey.set_dst(vId.first + 1);
         eKey.set_ranking(0);
         edge.set_key(std::move(eKey));
         auto props = genData(FLAGS_size);
         edge.set_props(std::move(props));
         edges.emplace_back(std::move(edge));
-        vId++;
+        vId.first++;
         return edges;
     }
 

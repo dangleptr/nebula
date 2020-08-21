@@ -39,7 +39,7 @@ public:
         ResultType getFloat(float& v) const noexcept;
         ResultType getDouble(double& v) const noexcept;
         ResultType getString(folly::StringPiece& v) const noexcept;
-        ResultType getVid(int64_t& v) const noexcept;
+        ResultType getVid(VertexID& v) const noexcept;
     private:
         const RowReader* reader_;
         Iterator* iter_;
@@ -117,7 +117,7 @@ public:
             case nebula::cpp2::SupportedType::INT:
                 return static_cast<int64_t>(0);
             case nebula::cpp2::SupportedType::VID: {
-                return static_cast<VertexID>(0);
+                return VertexID();
             }
             case nebula::cpp2::SupportedType::FLOAT:
             case nebula::cpp2::SupportedType::DOUBLE: {
@@ -279,8 +279,8 @@ public:
     ResultType getString(int64_t index,
                          folly::StringPiece& v) const noexcept;
 
-    ResultType getVid(const folly::StringPiece name, int64_t& v) const noexcept;
-    ResultType getVid(int64_t index, int64_t& v) const noexcept;
+    ResultType getVid(const folly::StringPiece name, VertexID& v) const noexcept;
+    ResultType getVid(int64_t index, VertexID& v) const noexcept;
 
     std::shared_ptr<const meta::SchemaProviderIf> getSchema() const {
         return schema_;
@@ -390,7 +390,7 @@ private:
     int32_t readDouble(int64_t offset, double& v) const noexcept;
     int32_t readString(int64_t offset, folly::StringPiece& v) const noexcept;
     int32_t readInt64(int64_t offset, int64_t& v) const noexcept;
-    int32_t readVid(int64_t offset, int64_t& v) const noexcept;
+    int32_t readVid(int64_t offset, VertexID& v) const noexcept;
 
     // Following methods assume the parameters index and offset are valid
     // When succeeded, offset will advance
@@ -404,7 +404,7 @@ private:
     ResultType getString(int64_t index, int64_t& offset, folly::StringPiece& v)
         const noexcept;
     ResultType getInt64(int64_t index, int64_t& offset, int64_t& v) const noexcept;
-    ResultType getVid(int64_t index, int64_t& offset, int64_t& v) const noexcept;
+    ResultType getVid(int64_t index, int64_t& offset, VertexID& v) const noexcept;
 };
 
 }  // namespace nebula

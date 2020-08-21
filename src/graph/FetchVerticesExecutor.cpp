@@ -448,7 +448,7 @@ void FetchVerticesExecutor::processResult(RpcResponse &&result) {
         }
 
         auto visitor = [&, this] (const RowReader *reader) -> Status {
-            VertexID vid = 0;
+            VertexID vid;
             auto rc = reader->getVid(*colname_, vid);
             if (rc != ResultType::SUCCEEDED) {
                 return Status::Error("Column `%s' not found", colname_->c_str());
@@ -537,7 +537,7 @@ void FetchVerticesExecutor::processResult(RpcResponse &&result) {
             auto& ds = dataMap[vid];
 
             std::vector<VariantType> record;
-            record.emplace_back(VariantType(vid));
+            record.emplace_back(vid);
 
             Getters getters;
             getters.getAliasProp = [&] (const std::string& tagName, const std::string &prop)

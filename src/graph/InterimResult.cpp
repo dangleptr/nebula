@@ -48,6 +48,24 @@ StatusOr<std::vector<VertexID>> InterimResult::getVIDs(const std::string &col) c
     return result;
 }
 
+StatusOr<std::vector<int64_t>> InterimResult::getColumnsAsInt64(const std::string& col) const {
+     if (!hasData()) {
+        return Status::Error("Interim has no data.");
+    }
+    std::vector<int64_t> result;
+    auto iter = rsReader_->begin();
+    while (iter) {
+        int64_t val;
+        auto rc = iter->getInt(col, val);
+        if (rc != ResultType::SUCCEEDED) {
+            return Status::Error("Column `%s' not found", col.c_str());
+        }
+        result.emplace_back(val);
+        ++iter;
+    }
+    return result;
+}
+
 StatusOr<std::vector<VertexID>> InterimResult::getDistinctVIDs(const std::string &col) const {
     if (!vids_.empty()) {
         DCHECK(rsReader_ == nullptr);
@@ -95,7 +113,7 @@ StatusOr<std::vector<cpp2::RowValue>> InterimResult::getRows() const {
             row.emplace_back();
             switch (type) {
                 case SupportedType::VID: {
-                    int64_t v;
+                    VertexID v;
                     auto rc = rowIter->getVid(field, v);
                     if (rc != ResultType::SUCCEEDED) {
                         return Status::Error(
@@ -214,7 +232,7 @@ InterimResult::buildIndex(const std::string &vidColumn) const {
             auto type = schema->getFieldType(i).type;
             switch (type) {
                 case SupportedType::VID: {
-                    int64_t v;
+                    VertexID v;
                     auto rc = rowIter->getVid(i, v);
                     if (rc != ResultType::SUCCEEDED) {
                         return Status::Error("Get vid from interim failed.");
@@ -336,7 +354,7 @@ Status InterimResult::castToInt(cpp2::ColumnValue *col) {
         case cpp2::ColumnValue::Type::integer:
             break;
         case cpp2::ColumnValue::Type::id:
-            col->set_integer(col->get_id());
+            col->set_id(col->get_id());
             break;
         case cpp2::ColumnValue::Type::timestamp:
             col->set_integer(col->get_timestamp());
@@ -413,7 +431,7 @@ Status InterimResult::castToTimestamp(cpp2::ColumnValue *col) {
             col->set_timestamp(col->get_integer());
             break;
         case cpp2::ColumnValue::Type::id:
-            col->set_timestamp(col->get_id());
+            col->set_timestamp(col->get_id().first);
             break;
         case cpp2::ColumnValue::Type::double_precision: {
             auto d2i = static_cast<int64_t>(col->get_double_precision());
@@ -445,7 +463,7 @@ Status InterimResult::castToTimestamp(cpp2::ColumnValue *col) {
 Status InterimResult::castToDouble(cpp2::ColumnValue *col) {
     switch (col->getType()) {
         case cpp2::ColumnValue::Type::id: {
-            auto i2d = static_cast<double>(col->get_id());
+            auto i2d = static_cast<double>(col->get_id().first);
             col->set_double_precision(i2d);
             break;
         }
@@ -486,7 +504,7 @@ Status InterimResult::castToDouble(cpp2::ColumnValue *col) {
 Status InterimResult::castToBool(cpp2::ColumnValue *col) {
     switch (col->getType()) {
         case cpp2::ColumnValue::Type::id: {
-            auto i2b = col->get_id() != 0;
+            auto i2b = col->get_id().first != 0;
             col->set_bool_val(i2b);
             break;
         }
@@ -522,8 +540,8 @@ Status InterimResult::castToBool(cpp2::ColumnValue *col) {
 Status InterimResult::castToStr(cpp2::ColumnValue *col) {
     switch (col->getType()) {
         case cpp2::ColumnValue::Type::id: {
-            auto i2s = folly::to<std::string>(col->get_id());
-            col->set_str(std::move(i2s));
+            auto vid = col->get_id();
+            col->set_str(folly::stringPrintf("%ld_%ld", vid.first, vid.second));
             break;
         }
         case cpp2::ColumnValue::Type::integer: {

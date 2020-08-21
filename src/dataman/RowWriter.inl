@@ -17,10 +17,6 @@ RowWriter::operator<<(T v) noexcept {
             writeInt(v);
             break;
         }
-        case cpp2::SupportedType::VID: {
-            cord_ << (uint64_t)v;
-            break;
-        }
         default: {
             LOG(ERROR) << "Incompatible value type \"int\""
                        << ", current type " << static_cast<int32_t>(type->get_type());

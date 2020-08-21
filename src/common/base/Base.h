@@ -137,8 +137,8 @@ struct PartMeta {
 
 using PartsMap  = std::unordered_map<GraphSpaceID, std::unordered_map<PartitionID, PartMeta>>;
 
-using VariantType = boost::variant<int64_t, double, bool, std::string>;
-constexpr const char* VARIANT_TYPE_NAME[] = {"int", "double", "bool", "string"};
+using VariantType = boost::variant<int64_t, double, bool, std::string, VertexID>;
+constexpr const char* VARIANT_TYPE_NAME[] = {"int", "double", "bool", "string", "vid"};
 
 #ifndef VAR_INT64
 #define VAR_INT64 0
@@ -154,6 +154,10 @@ constexpr const char* VARIANT_TYPE_NAME[] = {"int", "double", "bool", "string"};
 
 #ifndef VAR_STR
 #define VAR_STR 3
+#endif
+
+#ifndef VAR_VID
+#define VAR_VID 4
 #endif
 
 // reserved property names
@@ -193,4 +197,31 @@ std::string versionString();
 
 }  // namespace nebula
 
+namespace std {
+
+template<>
+struct hash<nebula::VariantType> {
+    std::size_t operator() (const nebula::VariantType& value) const {
+        switch (value.which()) {
+            case VAR_INT64:
+                return std::hash<int64_t>()(boost::get<int64_t>(value));
+            case VAR_DOUBLE:
+                return std::hash<double>()(boost::get<double>(value));
+            case VAR_BOOL:
+                return std::hash<bool>()(boost::get<bool>(value));
+            case VAR_STR:
+                return std::hash<std::string>()(boost::get<std::string>(value));
+            case VAR_VID:
+                return std::hash<nebula::VertexID>()(boost::get<nebula::VertexID>(value));
+        }
+        LOG(FATAL) << "unknown type: " << value.which();
+    }
+};
+
+}  // namespace std
+
 #endif  // COMMON_BASE_BASE_H_
+
+
+
+

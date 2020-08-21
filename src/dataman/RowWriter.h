@@ -98,6 +98,7 @@ public:
     RowWriter& operator<<(const std::string& v) noexcept;
     RowWriter& operator<<(folly::StringPiece v) noexcept;
     RowWriter& operator<<(const char* v) noexcept;
+    RowWriter& operator<<(const VertexID& vId) noexcept;
 
     // Control stream
     RowWriter& operator<<(ColName&& colName) noexcept;

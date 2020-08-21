@@ -10,10 +10,10 @@
 #include "base/StatusOr.h"
 #include "base/Status.h"
 #include "base/ICord.h"
-#include "storage/client/StorageClient.h"
 #include "filter/FunctionManager.h"
 #include <boost/variant.hpp>
 #include <folly/futures/Future.h>
+#include "storage/client/StorageClient.h"
 
 namespace nebula {
 
@@ -160,7 +160,6 @@ public:
         return storageClient_;
     }
 
-
     void setSpace(GraphSpaceID space) {
         space_ = space;
     }
@@ -264,7 +263,8 @@ public:
             std::is_same<std::remove_cv_t<T>, int64_t>::value
             || std::is_same<std::remove_cv_t<T>, double>::value
             || std::is_same<std::remove_cv_t<T>, bool>::value
-            || std::is_same<std::remove_cv_t<T>, std::string>::value,
+            || std::is_same<std::remove_cv_t<T>, std::string>::value
+            || std::is_same<std::remove_cv_t<T>, VertexID>::value,
             "Invalid value type");
         return boost::get<std::remove_reference_t<T>>(value);
     }
@@ -283,14 +283,16 @@ public:
 
     static bool asBool(const VariantType &value) {
         switch (value.which()) {
-            case 0:
+            case VAR_INT64:
                 return asInt(value) != 0;
-            case 1:
+            case VAR_DOUBLE:
                 return asDouble(value) != 0.0;
-            case 2:
+            case VAR_BOOL:
                 return boost::get<bool>(value);
-            case 3:
+            case VAR_STR:
                 return asString(value).empty();
+            case VAR_VID:
+                return boost::get<VertexID>(value).first != 0;
             default:
                 DCHECK(false);
         }
@@ -343,6 +345,9 @@ public:
                 return buf;
             case 3:
                 return boost::get<std::string>(value);
+            case 4:
+                auto vId = boost::get<VertexID>(value);
+                return folly::stringPrintf("%ld_%ld", vId.first, vId.second);
         }
         LOG(FATAL) << "unknown type: " << value.which();
     }
@@ -362,6 +367,8 @@ public:
             case 3:
                 // TODO(dutor) error handling
                 return folly::to<double>(boost::get<std::string>(value));
+            case 4:
+                return static_cast<double>(boost::get<VertexID>(value).first);
         }
         LOG(FATAL) << "unknown type: " << value.which();
     }
@@ -377,6 +384,8 @@ public:
             case 3:
                 // TODO(dutor) error handling
                 return folly::to<int64_t>(boost::get<std::string>(value));
+            case 4:
+                return boost::get<VertexID>(value).first;
         }
         LOG(FATAL) << "unknown type: " << value.which();
     }
@@ -768,43 +777,6 @@ private:
     std::unique_ptr<std::string>                name_;
     std::vector<std::unique_ptr<Expression>>    args_;
     FunctionManager::Function                   function_;
-};
-
-// (uuid)expr
-class UUIDExpression final : public Expression {
-public:
-    UUIDExpression() {
-        kind_ = kUUID;
-    }
-
-    explicit UUIDExpression(std::string *field) {
-        kind_ = kUUID;
-        field_.reset(field);
-    }
-
-    std::string toString() const override;
-
-    OptVariantType eval(Getters &getters) const override;
-
-    Status traversal(std::function<void(const Expression*)> visitor) const override;
-
-    Status MUST_USE_RESULT prepare() override;
-
-    void setContext(ExpressionContext *ctx) override {
-        context_ = ctx;
-    }
-
-private:
-    void encode(ICord<> &) const override {
-        throw Status::Error("Not supported yet");
-    }
-
-    const char* decode(const char *, const char *) override {
-        throw Status::Error("Not supported yet");
-    }
-
-private:
-    std::unique_ptr<std::string>                field_;
 };
 
 // +expr, -expr, !expr

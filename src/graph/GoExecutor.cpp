@@ -10,7 +10,7 @@
 #include "dataman/RowReader.h"
 #include "dataman/RowSetReader.h"
 #include "dataman/ResultSchemaProvider.h"
-#include <boost/functional/hash.hpp>
+#include <folly/hash/Hash.h>
 
 
 DEFINE_bool(filter_pushdown, true, "If pushdown the filter to storage.");
@@ -199,11 +199,17 @@ Status GoExecutor::prepareFrom() {
                 auto *funcExpr = static_cast<FunctionCallExpression*>(expr);
                 if (*(funcExpr->name()) == "near") {
                     auto v = Expression::asString(value.value());
-                    std::vector<VertexID> result;
+                    std::vector<int64_t> result;
                     folly::split(",", v, result, true);
+
+                    for (auto vId : result) {
+                        starts_.emplace_back(vId);
+                    }
+                    /*
                     starts_.insert(starts_.end(),
                                    std::make_move_iterator(result.begin()),
                                    std::make_move_iterator(result.end()));
+                    */
                     continue;
                 }
             }
@@ -212,7 +218,7 @@ Status GoExecutor::prepareFrom() {
                 status = Status::Error("Vertex ID should be of type integer");
                 break;
             }
-            starts_.push_back(Expression::asInt(v));
+            starts_.emplace_back(Expression::asInt(v));
         }
         fromType_ = kInstantExpr;
         if (!status.ok()) {
@@ -1084,8 +1090,8 @@ bool GoExecutor::processFinalResult(Callback cb) const {
     std::size_t recordIn = recordFrom_;
     CHECK_GT(recordFrom_, 0);
 
-    VertexID srcId = 0;
-    VertexID dstId = 0;
+    VertexID srcId;
+    VertexID dstId;
     EdgeType edgeType = 0;
     uint32_t inputRow = 0;
     RowReader reader = RowReader::getEmptyRowReader();
@@ -1292,8 +1298,9 @@ bool GoExecutor::processFinalResult(Callback cb) const {
                             }
                             // Check if duplicate
                             if (distinct_) {
-                                auto ret = uniqResult->emplace(boost::hash_range(record.begin(),
-                                                                                 record.end()));
+                                auto ret = uniqResult->emplace(
+                                        folly::hash::hash_range(record.begin(),
+                                                                record.end()));
                                 if (!ret.second) {
                                     continue;
                                 }

@@ -89,7 +89,11 @@ Status DbDumper::initParams() {
     std::vector<std::string> tags, edges;
     try {
         folly::splitTo<PartitionID>(',', FLAGS_parts, std::inserter(parts_, parts_.begin()), true);
-        folly::splitTo<VertexID>(',', FLAGS_vids, std::inserter(vids_, vids_.begin()), true);
+        std::vector<int64_t> ids;
+        folly::splitTo<int64_t>(',', FLAGS_vids, std::inserter(ids, ids.begin()), true);
+        for (auto id : ids) {
+            vids_.emplace(id);
+        }
         folly::splitTo<std::string>(',', FLAGS_tags, std::inserter(tags, tags.begin()), true);
         folly::splitTo<std::string>(',', FLAGS_edges, std::inserter(edges, edges.begin()), true);
     } catch (const std::exception& e) {
@@ -193,7 +197,7 @@ void DbDumper::run() {
         case 0b0100: {
             // specified vids, seek with prefix and print.
             for (auto vid : vids_) {
-                auto part = ID_HASH(vid, partNum_);
+                auto part = ID_HASH(vid.first, partNum_);
                 auto prefix = NebulaKeyUtils::vertexPrefix(part, vid);
                 seek(prefix);
             }
@@ -202,7 +206,7 @@ void DbDumper::run() {
         case 0b0101: {
             // specified vids and edges, seek with prefix and print.
             for (auto vid : vids_) {
-                auto part = ID_HASH(vid, partNum_);
+                auto part = ID_HASH(vid.first, partNum_);
                 for (auto edge : edges_) {
                     auto prefix = NebulaKeyUtils::edgePrefix(part, vid, edge);
                     seek(prefix);
@@ -213,7 +217,7 @@ void DbDumper::run() {
         case 0b0110: {
             // specified vids and tags, seek with prefix and print.
             for (auto vid : vids_) {
-                auto part = ID_HASH(vid, partNum_);
+                auto part = ID_HASH(vid.first, partNum_);
                 for (auto tag : tags_) {
                     auto prefix = NebulaKeyUtils::vertexPrefix(part, vid, tag);
                     seek(prefix);
@@ -224,7 +228,7 @@ void DbDumper::run() {
         case 0b0111: {
             // specified vids and edges, seek with prefix and print.
             for (auto vid : vids_) {
-                auto part = ID_HASH(vid, partNum_);
+                auto part = ID_HASH(vid.first, partNum_);
                 for (auto edge : edges_) {
                     auto prefix = NebulaKeyUtils::edgePrefix(part, vid, edge);
                     seek(prefix);
@@ -232,7 +236,7 @@ void DbDumper::run() {
             }
             // specified vids and tags, seek with prefix and print.
             for (auto vid : vids_) {
-                auto part = ID_HASH(vid, partNum_);
+                auto part = ID_HASH(vid.first, partNum_);
                 for (auto tag : tags_) {
                     auto prefix = NebulaKeyUtils::vertexPrefix(part, vid, tag);
                     seek(prefix);

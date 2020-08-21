@@ -209,11 +209,11 @@ Status FetchEdgesExecutor::setupEdgeKeysFromRef() {
 
     std::vector<EdgeRanking> ranks;
     if (rank_ != nullptr) {
-        ret = inputs->getVIDs(*rank_);
-        if (!ret.ok()) {
-            return ret.status();
+        auto rankRet = inputs->getColumnsAsInt64(*rank_);
+        if (!rankRet.ok()) {
+            return rankRet.status();
         }
-        ranks = std::move(ret).value();
+        ranks = std::move(rankRet).value();
     }
 
     std::unique_ptr<EdgeKeyHashSet> uniq;

@@ -43,6 +43,10 @@ void Expression::print(const VariantType &value) {
         case 3:
             fprintf(stderr, "%s\n", asString(value).c_str());
             break;
+        case 4:
+            auto vId = boost::get<VertexID>(value);
+            fprintf(stderr, "%ld_%ld\n", vId.first, vId.second);
+            break;
     }
 }
 
@@ -57,8 +61,6 @@ std::unique_ptr<Expression> Expression::makeExpr(uint8_t kind) {
             return std::make_unique<UnaryExpression>();
         case kTypeCasting:
             return std::make_unique<TypeCastingExpression>();
-        case kUUID:
-            return std::make_unique<UUIDExpression>();
         case kArithmetic:
             return std::make_unique<ArithmeticExpression>();
         case kRelational:
@@ -603,7 +605,7 @@ const char* FunctionCallExpression::decode(const char *pos, const char *end) {
     }
     return pos;
 }
-
+/*
 std::string UUIDExpression::toString() const {
     return folly::stringPrintf("uuid(%s)", field_->c_str());
 }
@@ -638,7 +640,7 @@ Status UUIDExpression::traversal(std::function<void(const Expression*)> visitor)
 Status UUIDExpression::prepare() {
     return Status::OK();
 }
-
+*/
 std::string UnaryExpression::toString() const {
     std::string buf;
     buf.reserve(256);

@@ -226,7 +226,7 @@ void UpdateEdgeExecutor::updateEdge(bool reversely) {
         if (!resp.ok()) {
             doError(Status::Error("Update edge(%s) `%ld->%ld@%ld' failed: %s",
                         edgeTypeName_->c_str(),
-                        edge_.src, edge_.dst, edge_.ranking,
+                        edge_.src.first, edge_.dst.first, edge_.ranking,
                         resp.status().toString().c_str()));
             return;
         }
@@ -268,7 +268,7 @@ void UpdateEdgeExecutor::updateEdge(bool reversely) {
     auto error = [this] (auto &&e) {
         auto msg = folly::stringPrintf("Update edge(%s) `%ld->%ld@%ld'  exception: %s",
                         edgeTypeName_->c_str(),
-                        edge_.src, edge_.dst, edge_.ranking,
+                        edge_.src.first, edge_.dst.first, edge_.ranking,
                         e.what().c_str());
         LOG(ERROR) << msg;
         doError(Status::Error(std::move(msg)));

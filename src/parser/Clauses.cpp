@@ -84,7 +84,7 @@ Status VerticesClause::prepare(Clause::Vertices &vertices) const {
                 break;
             }
 
-            auto valInt = Expression::asInt(v);
+            auto valInt = VertexID(Expression::asInt(v));
             auto result = uniqID->emplace(valInt);
             if (result.second) {
                 vertices.vids_.emplace_back(valInt);
